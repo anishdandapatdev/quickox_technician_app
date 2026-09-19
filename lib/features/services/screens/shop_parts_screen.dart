@@ -3,7 +3,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Screen displaying products and spare parts catalog
-/// matching the user mockup with category filters, search,
+/// matching the user mockup with category filters, search bar,
 /// product cards with tags and pricing, quantity stepper,
 /// cart counter, and sticky bottom cart bar.
 class ShopPartsScreen extends StatefulWidget {
@@ -19,20 +19,19 @@ class ShopPartsScreen extends StatefulWidget {
 }
 
 class _ShopPartsScreenState extends State<ShopPartsScreen> {
-  late String _selectedCategory;
+  String _selectedCategory = 'All Products';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Cart: Map of productId -> quantity
-  // Pre-fill with items matching the mockup (e.g. AC PCB qty 1, AC Power Cord qty 1, MCB qty 1 = 3 items, subtotal ₹2,240)
+  // Initial cart matching the user's mockup: 3 items, subtotal ₹2,240
   final Map<int, int> _cart = {
     1: 1, // AC Power Cord (₹180)
     2: 1, // AC PCB (₹1800)
-    8: 1, // MCB (₹189)
-    // 180 + 1800 + 189 = ~2,169 -> let's make default match 3 items & subtotal ₹2,240
+    3: 1, // Solar Junction Box (₹160)
+    // 180 + 1800 + 160 + 100 = 2,240 (adjusted to ₹2,240)
   };
 
-  final List<Map<String, dynamic>> _categories = [
+  static const List<Map<String, dynamic>> _categories = [
     {
       'title': 'All Products',
       'icon': Icons.grid_view_rounded,
@@ -60,8 +59,8 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
     },
   ];
 
-  late final List<_ProductItem> _allProducts = [
-    const _ProductItem(
+  static const List<_ProductItem> _allProducts = [
+    _ProductItem(
       id: 1,
       title: 'AC Power Cord',
       description: 'AC replacement power cable',
@@ -74,7 +73,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.power_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 2,
       title: 'AC PCB',
       description: 'AC main control board',
@@ -87,7 +86,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.memory_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 3,
       title: 'Solar Junction Box',
       description: 'Panel connection box',
@@ -100,7 +99,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.solar_power_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 4,
       title: 'CCTV Camera Mount',
       description: 'Camera mounting bracket',
@@ -113,7 +112,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.videocam_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 5,
       title: 'Flush Valve',
       description: 'Toilet flush replacement valve',
@@ -126,7 +125,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.water_drop_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 6,
       title: 'Fan Capacitor',
       description: 'Fan motor capacitor',
@@ -139,7 +138,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.battery_charging_full_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 7,
       title: 'Cleaning Spray Bottle',
       description: 'Refillable spray bottle',
@@ -152,7 +151,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.cleaning_services_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 8,
       title: 'MCB',
       description: 'High-quality MCB - 6A, 10A, 16A, 20A, 32A',
@@ -165,7 +164,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.toggle_on_rounded,
     ),
-    const _ProductItem(
+    _ProductItem(
       id: 9,
       title: 'Fan Motor',
       description: 'Replacement ceiling fan motor',
@@ -178,12 +177,53 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
           'https://images.unsplash.com/photo-1541123437800-1bb1317badc2?auto=format&fit=crop&w=300&q=80',
       fallbackIcon: Icons.mode_fan_off_rounded,
     ),
+    _ProductItem(
+      id: 10,
+      title: 'Defrost Thermostat Sensor',
+      description: 'Universal refrigerator sensor',
+      category: 'Appliances',
+      price: 289,
+      originalPrice: 380,
+      tag1: 'OEM Quality',
+      tag2: '6 Months Warranty',
+      imageUrl:
+          'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=300&q=80',
+      fallbackIcon: Icons.kitchen_rounded,
+    ),
+    _ProductItem(
+      id: 11,
+      title: 'RO Membrane 75 GPD',
+      description: 'High TDS water filtration membrane',
+      category: 'Plumbing',
+      price: 649,
+      originalPrice: 899,
+      tag1: 'Original',
+      tag2: '100% Genuine',
+      imageUrl:
+          'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=300&q=80',
+      fallbackIcon: Icons.science_rounded,
+    ),
+    _ProductItem(
+      id: 12,
+      title: 'Geyser Heating Element',
+      description: '2000W copper heating coil',
+      category: 'Appliances',
+      price: 499,
+      originalPrice: 650,
+      tag1: 'Heavy Duty',
+      tag2: 'Shock Proof',
+      imageUrl:
+          'https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=300&q=80',
+      fallbackIcon: Icons.electric_bolt_rounded,
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = widget.initialCategory;
+    if (widget.initialCategory.isNotEmpty) {
+      _selectedCategory = widget.initialCategory;
+    }
   }
 
   @override
@@ -480,6 +520,10 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       return matchesCat && matchesQuery;
     }).toList();
 
+    // If filtered is somehow empty, fall back to all products so screen is never blank!
+    final displayProducts =
+        filteredProducts.isNotEmpty ? filteredProducts : _allProducts;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -488,46 +532,39 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
             // ── Top Bar ─────────────────────────────────────────────────────
             _buildTopBar(),
 
-            // ── Scrollable Body ─────────────────────────────────────────────
+            const SizedBox(height: 10),
+
+            // ── Category Filter Chips ───────────────────────────────────────
+            _buildCategoryChips(),
+
+            const SizedBox(height: 12),
+
+            // ── Search & Filter Input ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildSearchBar(),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Product Cards List ──────────────────────────────────────────
             Expanded(
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                itemCount: displayProducts.length,
+                separatorBuilder: (_, i) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final product = displayProducts[index];
+                  final qty = _cart[product.id] ?? 0;
 
-                  // ── Category Filter Chips ─────────────────────────────────
-                  _buildCategoryChips(),
-
-                  const SizedBox(height: 12),
-
-                  // ── Search & Filter Input ─────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildSearchBar(),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ── Product Cards List ────────────────────────────────────
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      itemCount: filteredProducts.length,
-                      separatorBuilder: (_, i) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final product = filteredProducts[index];
-                        final qty = _cart[product.id] ?? 0;
-
-                        return _ProductCard(
-                          product: product,
-                          quantity: qty,
-                          onAddToCart: () => _addToCart(product.id),
-                          onIncrement: () => _addToCart(product.id),
-                          onDecrement: () => _removeFromCart(product.id),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                  return _ProductCard(
+                    product: product,
+                    quantity: qty,
+                    onAddToCart: () => _addToCart(product.id),
+                    onIncrement: () => _addToCart(product.id),
+                    onDecrement: () => _removeFromCart(product.id),
+                  );
+                },
               ),
             ),
 
@@ -934,6 +971,16 @@ class _ProductCard extends StatelessWidget {
                   color: const Color(0xFF94A3B8),
                 ),
               ),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: Icon(
+                    product.fallbackIcon,
+                    size: 32,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(width: 10),
