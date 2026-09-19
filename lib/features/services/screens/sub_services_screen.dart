@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import 'service_variants_screen.dart';
+import 'service_detail_overview_screen.dart';
 
 /// Screen displaying sub-services for a selected category in the exact same
 /// horizontal card format, with interactive booking slots bottom sheet.
@@ -297,6 +297,18 @@ class SubServicesScreen extends StatelessWidget {
             fallbackIcon: Icons.electric_bolt_rounded,
             price: '₹349',
           ),
+          _SubServiceDetailItem(
+            title: 'Refrigerator Repair, Installation Solutions',
+            description:
+                'Diagnose and fix common refrigerator problems, repair refrigerator along with installation service',
+            imageUrl:
+                'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=600&q=80',
+            badgeText: 'Live Now',
+            badgeType: _BadgeType.liveNow,
+            tags: ['₹299', '45 Mins', '30-Day Warranty'],
+            fallbackIcon: Icons.kitchen_rounded,
+            price: '₹299',
+          ),
         ];
     }
   }
@@ -305,7 +317,7 @@ class SubServicesScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ServiceVariantsScreen(
+        builder: (_) => ServiceDetailOverviewScreen(
           serviceTitle: item.title,
           serviceSubtitle: item.description,
           parentCategory: categoryTitle,

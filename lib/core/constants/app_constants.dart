@@ -25,6 +25,8 @@ abstract final class AppAssets {
   static const String technician = 'assets/images/technician.png';
   static const String technicianRohit = 'assets/images/technician_rohit.png';
   static const String technicianAvatar = 'assets/images/technician_avatar.jpg';
+  static const String refrigeratorTechnician =
+      'assets/images/refrigerator_technician.jpg';
 }
 
 /// App-wide string constants
