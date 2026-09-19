@@ -37,7 +37,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final screens = [
       HomeScreen(onNavigateTab: _onTabTapped),
-      const ServicesScreen(),
+      ServicesScreen(onNavigateTab: _onTabTapped),
       const MembershipScreen(),
       const BookingsScreen(),
       const ProfileScreen(),
@@ -81,13 +81,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: AppStrings.navHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded),
-              activeIcon: Icon(Icons.grid_view_sharp),
+              icon: Icon(Icons.handyman_outlined),
+              activeIcon: Icon(Icons.handyman_rounded),
               label: AppStrings.navServices,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.card_membership_outlined),
-              activeIcon: Icon(Icons.card_membership_rounded),
+              icon: Icon(Icons.workspace_premium_outlined),
+              activeIcon: Icon(Icons.workspace_premium_rounded),
               label: AppStrings.navMembership,
             ),
             BottomNavigationBarItem(
