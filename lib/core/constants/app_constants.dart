@@ -27,7 +27,9 @@ abstract final class AppAssets {
 /// App-wide string constants
 abstract final class AppStrings {
   AppStrings._();
-  static const String appName = 'Quickox Technician';
+  static const String appName = 'Quickox';
+
+  // ── Auth & Sign In ────────────────────────────────────────────────────────
   static const String welcomeBack = 'Welcome Back';
   static const String loginSubtitle = 'Log in to continue';
   static const String mobileNumber = 'Enter mobile number';
@@ -39,20 +41,33 @@ abstract final class AppStrings {
   static const String createAccount = 'Create an account';
 
   // ── Sign Up ────────────────────────────────────────────────────────────────
-  static const String joinQuickox = 'Join as Partner';
-  static const String signUpSubtitle = 'Register as a certified service technician';
+  static const String signUpTitle = 'Create Account';
+  static const String signUpSubtitle = 'Sign up to book trusted home services instantly';
+  static const String alreadyHaveAccount = 'Already have an account? ';
+  static const String logIn = 'Log in';
+
+  // ── OTP Verification ───────────────────────────────────────────────────────
+  static const String verifyPhone = 'Verify Phone';
+  static const String otpSubtitle = 'Enter the 6-digit code sent to';
+  static const String verifyOtp = 'Verify & Continue';
+  static const String resendCode = 'Resend Code';
+  static const String didntReceive = "Didn't receive the code? ";
+
+  // ── Profile Setup ──────────────────────────────────────────────────────────
+  static const String profileSetupTitle = 'Set Up Profile';
+  static const String profileSetupSubtitle = 'Tell us a bit about yourself to personalize your experience';
   static const String fullName = 'Full Name';
   static const String fullNameHint = 'e.g. Rahul Sharma';
-  static const String email = 'Email Address';
-  static const String emailHint = 'e.g. rahul.sharma@example.com';
-  static const String primaryTrade = 'Primary Skill / Trade';
-  static const String selectTrade = 'Select your trade';
-  static const String serviceCity = 'Service City / Zone';
-  static const String serviceCityHint = 'e.g. Haldia Central';
-  static const String experience = 'Experience';
-  static const String selectExperience = 'Years of experience';
-  static const String termsNotice = 'I agree to the Quickox Partner Terms and Service Standards';
-  static const String registerButton = 'Register as Technician';
-  static const String alreadyRegistered = 'Already registered? ';
-  static const String logIn = 'Log in';
+  static const String email = 'Email / Gmail';
+  static const String emailHint = 'e.g. rahul@gmail.com';
+  static const String location = 'Location / Address';
+  static const String locationHint = 'e.g. Haldia Central, West Bengal';
+  static const String completeSetup = 'Complete & Get Started';
+
+  // ── Navigation Tabs ────────────────────────────────────────────────────────
+  static const String navHome = 'Home';
+  static const String navServices = 'Services';
+  static const String navMembership = 'Membership';
+  static const String navBook = 'Book';
+  static const String navProfile = 'Profile';
 }

@@ -21,16 +21,16 @@ void main() {
     ),
   );
 
-  runApp(const QuickoxTechnicianApp());
+  runApp(const QuickoxApp());
 }
 
-class QuickoxTechnicianApp extends StatelessWidget {
-  const QuickoxTechnicianApp({super.key});
+class QuickoxApp extends StatelessWidget {
+  const QuickoxApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quickox Technician',
+      title: 'Quickox',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: const LoginScreen(),

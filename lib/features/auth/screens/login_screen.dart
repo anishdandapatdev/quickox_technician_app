@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/common_widgets.dart';
 import '../models/country_code.dart';
 import '../widgets/country_picker_prefix.dart';
+import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
 
 /// Login screen — OTP-based phone authentication
@@ -70,17 +71,33 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    // Simulated OTP dispatch
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) setState(() => _isLoading = false);
+
+    final fullPhone = '${_selectedCountry.code} ${_phoneController.text.trim()}';
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpVerificationScreen(phoneNumber: fullPhone),
+      ),
+    );
   }
 
   void _googleLogin() {
-    // TODO: implement Google sign-in
+    final fullPhone = '${_selectedCountry.code} ${_phoneController.text.trim()}';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpVerificationScreen(
+          phoneNumber: fullPhone.isNotEmpty ? fullPhone : '+91 98765 43210',
+        ),
+      ),
+    );
   }
 
   void _appleLogin() {
-    // TODO: implement Apple sign-in
+    _googleLogin();
   }
 
   void _createAccount() {
