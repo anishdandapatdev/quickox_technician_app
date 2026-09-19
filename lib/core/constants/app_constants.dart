@@ -22,6 +22,8 @@ abstract final class AppSpacing {
 abstract final class AppAssets {
   AppAssets._();
   static const String logo = 'assets/images/icon_logo.jpeg';
+  static const String technician = 'assets/images/technician.png';
+  static const String technicianRohit = 'assets/images/technician_rohit.png';
 }
 
 /// App-wide string constants

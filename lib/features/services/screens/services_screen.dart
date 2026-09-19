@@ -3,7 +3,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-/// Service Categories Catalog Screen matching the Quickox UI design
+/// Service Categories Catalog Screen matching the updated Quickox UI design
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({
     super.key,
@@ -28,7 +28,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
       badgeText: 'Live Now',
       badgeType: _BadgeType.liveNow,
-      tags: ['AC Repair', 'Plumbing'],
+      tags: ['AC Repair', 'Plumbing', 'Appliance Repair'],
       fallbackIcon: Icons.home_repair_service_rounded,
     ),
     _CategoryItem(
@@ -38,7 +38,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
       badgeText: 'Live Now',
       badgeType: _BadgeType.liveNow,
-      tags: ['Home Food', 'Restaurants'],
+      tags: ['Home Food', 'Restaurants', 'Tiffin'],
       fallbackIcon: Icons.restaurant_rounded,
     ),
     _CategoryItem(
@@ -48,18 +48,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80',
       badgeText: null,
       badgeType: _BadgeType.none,
-      tags: ['Bike Service', 'Cab Booking'],
+      tags: ['Bike Service', 'Car Service', 'Cab Booking'],
       fallbackIcon: Icons.directions_car_rounded,
-    ),
-    _CategoryItem(
-      title: 'Event Booking',
-      description: 'Birthday, Marriage, Catering & more',
-      imageUrl:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Coming Soon',
-      badgeType: _BadgeType.comingSoon,
-      tags: ['Birthday', 'Catering'],
-      fallbackIcon: Icons.celebration_rounded,
     ),
     _CategoryItem(
       title: 'Emergency Ambulance',
@@ -68,7 +58,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1587745416684-47953f16f02f?auto=format&fit=crop&w=600&q=80',
       badgeText: null,
       badgeType: _BadgeType.none,
-      tags: ['24/7 Service', 'Trained Staff'],
+      tags: ['24/7 Service', 'Trained Staff', 'Quick Response'],
       fallbackIcon: Icons.medical_services_rounded,
     ),
     _CategoryItem(
@@ -78,7 +68,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
       badgeText: null,
       badgeType: _BadgeType.none,
-      tags: ['Generic Medicines', 'Health Care'],
+      tags: ['Generic Medicines', 'Health Care', 'Fast Delivery'],
       fallbackIcon: Icons.medication_rounded,
     ),
     _CategoryItem(
@@ -88,18 +78,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
           'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80',
       badgeText: 'Coming Soon',
       badgeType: _BadgeType.comingSoon,
-      tags: ['Hotels', 'PG'],
+      tags: ['Hotels', 'PG', 'Guest House'],
       fallbackIcon: Icons.hotel_rounded,
-    ),
-    _CategoryItem(
-      title: 'Quickox Electra',
-      description: 'Electric Scooty Sales & Service',
-      imageUrl:
-          'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80',
-      badgeText: null,
-      badgeType: _BadgeType.none,
-      tags: ['Sales', 'Service'],
-      fallbackIcon: Icons.electric_moped_rounded,
     ),
   ];
 
@@ -130,22 +110,266 @@ class _ServicesScreenState extends State<ServicesScreen> {
             children: [
               const SizedBox(height: AppSpacing.md),
 
-              // ── Heading: All Service Categories ───────────────────────────
-              Text(
-                'All Service Categories',
-                style: AppTextStyles.h2.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+              // ── Top Bar: Logo, Location, Notification ─────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Logo + Brand Name
+                  Row(
+                    children: [
+                      Image.asset(
+                        AppAssets.logo,
+                        height: 34,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, e, s) => const Icon(
+                          Icons.home_repair_service_rounded,
+                          color: AppColors.primary,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Quickox',
+                        style: AppTextStyles.h2.copyWith(
+                          fontSize: 22,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Location & Notification Bell
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Selected City: Purulia'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Purulia',
+                              style: AppTextStyles.labelMd.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+
+                      // Bell icon with red badge count
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.bgSecondary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              size: 20,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEF4444),
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '1',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Select any category below to browse services, book instantly and get it done at your doorstep.',
-                style: AppTextStyles.bodyMd.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Header Section with Technician Hero Illustration ─────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Left: Title & Subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'All Service Categories',
+                          style: AppTextStyles.h2.copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Select any category below to browse services, book instantly and get it done at your doorstep.',
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Right: Technician with Backdrop and Floating Badge
+                  SizedBox(
+                    width: 125,
+                    height: 125,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        // Light blue curved shape
+                        Positioned(
+                          top: 4,
+                          right: 0,
+                          child: Container(
+                            width: 108,
+                            height: 112,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(54),
+                                topRight: Radius.circular(54),
+                                bottomLeft: Radius.circular(54),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Technician Image
+                        Positioned(
+                          bottom: 0,
+                          right: 2,
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              bottomRight: Radius.circular(20),
+                            ),
+                            child: Image.asset(
+                              AppAssets.technicianRohit,
+                              height: 120,
+                              width: 105,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, e, s) => Image.asset(
+                                AppAssets.technician,
+                                height: 120,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Floating "Trusted Experts" Badge
+                        Positioned(
+                          bottom: 16,
+                          left: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.verified_user_rounded,
+                                  color: Color(0xFF0F172A),
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Trusted',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F172A),
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Experts',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F172A),
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -204,16 +428,16 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       onPressed: () {
                         widget.onNavigateTab?.call(3); // Book tab
                       },
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_month_outlined,
                             size: 18,
                             color: Colors.white,
                           ),
-                          const SizedBox(width: 6),
-                          const Flexible(
+                          SizedBox(width: 6),
+                          Flexible(
                             child: Text(
                               'Book Inspection',
                               overflow: TextOverflow.ellipsis,
@@ -223,10 +447,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 16,
                             color: Colors.white,
                           ),
                         ],
@@ -297,20 +521,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // ── 2-Column Category Cards Grid ──────────────────────────────
-              GridView.builder(
+              // ── 1-Column Horizontal Category Cards List ───────────────────
+              ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredCategories.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  mainAxisExtent: 228,
-                ),
+                separatorBuilder: (_, i) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final item = filteredCategories[index];
-                  return _CategoryCard(item: item);
+                  return _HorizontalCategoryCard(item: item);
                 },
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -405,34 +624,34 @@ class _CategoryItem {
   final IconData fallbackIcon;
 }
 
-class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.item});
+class _HorizontalCategoryCard extends StatelessWidget {
+  const _HorizontalCategoryCard({required this.item});
 
   final _CategoryItem item;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 106,
       decoration: BoxDecoration(
         color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: Color(0x06000000),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // ── Image with Badge Overlay ──────────────────────────────────────
+          // ── Left: Image with Badge ────────────────────────────────────────
           SizedBox(
-            height: 104,
-            width: double.infinity,
+            width: 128,
+            height: double.infinity,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -445,7 +664,7 @@ class _CategoryCard extends StatelessWidget {
                       child: Icon(
                         item.fallbackIcon,
                         color: AppColors.textMuted,
-                        size: 38,
+                        size: 36,
                       ),
                     ),
                   ),
@@ -470,12 +689,12 @@ class _CategoryCard extends StatelessWidget {
                 // Top-right Badge
                 if (item.badgeText != null)
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 6,
+                    right: 6,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: 7,
+                        vertical: 2.5,
                       ),
                       decoration: BoxDecoration(
                         color: item.badgeType == _BadgeType.liveNow
@@ -494,9 +713,9 @@ class _CategoryCard extends StatelessWidget {
                         children: [
                           if (item.badgeType == _BadgeType.liveNow)
                             Container(
-                              width: 6,
-                              height: 6,
-                              margin: const EdgeInsets.only(right: 4),
+                              width: 5.5,
+                              height: 5.5,
+                              margin: const EdgeInsets.only(right: 3.5),
                               decoration: const BoxDecoration(
                                 color: Color(0xFF16A34A),
                                 shape: BoxShape.circle,
@@ -504,17 +723,17 @@ class _CategoryCard extends StatelessWidget {
                             )
                           else
                             const Padding(
-                              padding: EdgeInsets.only(right: 4),
+                              padding: EdgeInsets.only(right: 3.5),
                               child: Icon(
                                 Icons.access_time_rounded,
-                                size: 10,
+                                size: 9.5,
                                 color: Color(0xFFD97706),
                               ),
                             ),
                           Text(
                             item.badgeText!,
                             style: TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 9,
                               fontWeight: FontWeight.w700,
                               color: item.badgeType == _BadgeType.liveNow
                                   ? const Color(0xFF15803D)
@@ -529,15 +748,15 @@ class _CategoryCard extends StatelessWidget {
             ),
           ),
 
-          // ── Content Info ──────────────────────────────────────────────────
+          // ── Right: Content & Arrow ────────────────────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Title and Arrow
+                  // Title + Subtitle and Circular Chevron
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -551,7 +770,7 @@ class _CategoryCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.labelMd.copyWith(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 13,
+                                fontSize: 13.5,
                                 color: AppColors.textPrimary,
                               ),
                             ),
@@ -561,7 +780,7 @@ class _CategoryCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.bodySm.copyWith(
-                                fontSize: 10,
+                                fontSize: 10.5,
                                 height: 1.25,
                                 color: AppColors.textSecondary,
                               ),
@@ -571,25 +790,25 @@ class _CategoryCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Container(
-                        width: 24,
-                        height: 24,
+                        width: 26,
+                        height: 26,
                         decoration: const BoxDecoration(
                           color: Color(0xFFEFF6FF),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.chevron_right_rounded,
-                          size: 16,
+                          size: 18,
                           color: AppColors.primary,
                         ),
                       ),
                     ],
                   ),
 
-                  // Tag Chips Row
+                  // Pill Tags Row
                   Wrap(
                     spacing: 4,
-                    runSpacing: 4,
+                    runSpacing: 2,
                     children: item.tags.map((tag) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
