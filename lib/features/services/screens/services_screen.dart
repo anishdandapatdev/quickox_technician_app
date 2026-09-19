@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import 'category_detail_screen.dart';
 
 /// Service Categories Catalog Screen matching the updated Quickox UI design
 class ServicesScreen extends StatefulWidget {
@@ -433,7 +434,21 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 separatorBuilder: (_, i) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final item = filteredCategories[index];
-                  return _HorizontalCategoryCard(item: item);
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CategoryDetailScreen(
+                            headerTitle: item.title == 'Home Service'
+                                ? 'Doorstep Home Services & Repairs'
+                                : item.title,
+                          ),
+                        ),
+                      );
+                    },
+                    child: _HorizontalCategoryCard(item: item),
+                  );
                 },
               ),
               const SizedBox(height: AppSpacing.xl),
