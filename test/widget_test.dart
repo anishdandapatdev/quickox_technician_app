@@ -10,6 +10,31 @@ void main() {
   });
 
   testWidgets('ShopPartsScreen renders without error', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ShopPartsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Products & Spare Parts'), findsOneWidget);
+    expect(find.text('AC Power Cord'), findsOneWidget);
+  });
+
+  testWidgets('ShopPartsScreen renders on small 360x640 screen without overflow', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(720, 1280);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     await tester.pumpWidget(
       const MaterialApp(
         home: ShopPartsScreen(),
