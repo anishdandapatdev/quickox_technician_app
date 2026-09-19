@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
-import 'service_variants_screen.dart';
+import 'book_technician_screen.dart';
 
 /// Screen displaying the complete Service Overview & Landing details
 /// matching the user mockup with hero illustration, stats, "Choose What You Need",
@@ -85,9 +85,8 @@ class _ServiceDetailOverviewScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ServiceVariantsScreen(
+        builder: (_) => BookTechnicianScreen(
           serviceTitle: widget.serviceTitle,
-          serviceSubtitle: widget.serviceSubtitle,
           parentCategory: widget.parentCategory,
         ),
       ),
