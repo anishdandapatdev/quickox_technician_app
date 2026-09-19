@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import 'sub_services_screen.dart';
 
 /// Screen displaying service categories in the exact horizontal card style
 /// with top back navigation and category subtitle.
@@ -102,153 +103,15 @@ class CategoryDetailScreen extends StatelessWidget {
   ];
 
   void _handleCardTap(BuildContext context, _SubCategoryItem item) {
-    if (item.badgeType == _BadgeType.comingSoon) {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: AppColors.bgPrimary,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SubServicesScreen(
+          categoryTitle: item.title,
+          categorySubtitle: item.description,
         ),
-        builder: (ctx) => Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.access_time_rounded,
-                  color: Color(0xFFD97706),
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Coming Soon to Your Area!',
-                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w800),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                '${item.title} will be live in your zone soon. Subscribed Quickox Care members get early access!',
-                style: AppTextStyles.bodyMd,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Got It'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: AppColors.bgPrimary,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-        ),
-        builder: (ctx) => Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(AppRadius.full),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Icon(item.fallbackIcon, color: AppColors.primary, size: 28),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          style: AppTextStyles.h3.copyWith(fontSize: 18),
-                        ),
-                        Text(
-                          'Verified doorstep service',
-                          style: AppTextStyles.bodySm.copyWith(color: AppColors.success),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(item.description, style: AppTextStyles.bodyMd),
-              const SizedBox(height: AppSpacing.md),
-              const Text('Available Services:', style: TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppSpacing.xs),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: item.tags.map((t) {
-                  return Chip(
-                    label: Text(t, style: const TextStyle(fontSize: 12)),
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    side: const BorderSide(color: Color(0xFFDBEAFE)),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Booking initiated for ${item.title}'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
-                  },
-                  child: const Text('Book Service Now'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
