@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import 'choose_appointment_slot_screen.dart';
 
 /// Screen allowing the user to configure and book a technician
 /// matching the user mockup: issue categories grid, issue description,
@@ -25,14 +26,6 @@ class _BookTechnicianScreenState extends State<BookTechnicianScreen> {
   final List<String> _uploadedPhotos = [];
   String _serviceAddress = 'Chas Road, Purulia, West Bengal 723101';
   DateTime _selectedDate = DateTime.now();
-  int _selectedSlotIndex = 1;
-
-  final List<String> _timeSlots = [
-    '09:00 AM - 12:00 PM',
-    '12:00 PM - 03:00 PM',
-    '03:00 PM - 06:00 PM',
-    '06:00 PM - 09:00 PM',
-  ];
 
   final List<_IssueCategory> _issueCategories = const [
     _IssueCategory(
@@ -217,214 +210,15 @@ class _BookTechnicianScreenState extends State<BookTechnicianScreen> {
     );
   }
 
-  void _showTimeSlotBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-      ),
-      builder: (sheetCtx) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Select Preferred Time Slot',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Selected Date: ${_formatDate(_selectedDate)}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-                const SizedBox(height: 16),
-
-                // Slot options
-                Column(
-                  children: List.generate(_timeSlots.length, (i) {
-                    final isSelected = _selectedSlotIndex == i;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: InkWell(
-                        onTap: () {
-                          setSheetState(() => _selectedSlotIndex = i);
-                          setState(() => _selectedSlotIndex = i);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
-                              width: isSelected ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: 18,
-                                color: isSelected ? AppColors.primary : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                _timeSlots[i],
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected ? AppColors.primary : const Color(0xFF0F172A),
-                                ),
-                              ),
-                              const Spacer(),
-                              if (isSelected)
-                                const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-
-                // Confirm booking button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(sheetCtx);
-                      _showBookingConfirmationDialog();
-                    },
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Confirm & Schedule Technician',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                        ),
-                        SizedBox(width: 6),
-                        Icon(Icons.arrow_forward_rounded, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showBookingConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFDCFCE7),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF16A34A),
-                size: 48,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Technician Scheduled!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'A verified expert will visit for "${_issueCategories[_selectedIssueIndex].title}" on ${_formatDate(_selectedDate)} between ${_timeSlots[_selectedSlotIndex]}.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on_rounded, size: 18, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _serviceAddress,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF334155)),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () {
-                  Navigator.pop(dialogCtx);
-                  Navigator.pop(context); // Go back to overview
-                },
-                child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
+  void _navigateToChooseSlot() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChooseAppointmentSlotScreen(
+          serviceTitle: widget.serviceTitle,
+          parentCategory: widget.parentCategory,
+          serviceAddress: _serviceAddress,
+          selectedIssue: _issueCategories[_selectedIssueIndex].title,
         ),
       ),
     );
@@ -1245,7 +1039,7 @@ class _BookTechnicianScreenState extends State<BookTechnicianScreen> {
                 ),
                 elevation: 0,
               ),
-              onPressed: _showTimeSlotBottomSheet,
+              onPressed: _navigateToChooseSlot,
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
