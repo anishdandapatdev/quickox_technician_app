@@ -130,32 +130,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
             children: [
               const SizedBox(height: AppSpacing.md),
 
-              // ── Top Bar: Logo ─────────────────────────────────────────────
-              Row(
-                children: [
-                  Image.asset(
-                    AppAssets.logo,
-                    height: 36,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, e, s) => const Icon(
-                      Icons.home_repair_service_rounded,
-                      color: AppColors.primary,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Quickox',
-                    style: AppTextStyles.h2.copyWith(
-                      fontSize: 22,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
               // ── Heading: All Service Categories ───────────────────────────
               Text(
                 'All Service Categories',
