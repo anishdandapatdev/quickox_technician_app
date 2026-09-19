@@ -526,61 +526,62 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top Bar ─────────────────────────────────────────────────────
-            _buildTopBar(),
-
-            const SizedBox(height: 10),
-
-            // ── Category Filter Chips ───────────────────────────────────────
-            _buildCategoryChips(),
-
-            const SizedBox(height: 12),
-
-            // ── Search & Filter Input ───────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildSearchBar(),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Product Cards List ──────────────────────────────────────────
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                itemCount: displayProducts.length,
-                separatorBuilder: (_, i) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final product = displayProducts[index];
-                  final qty = _cart[product.id] ?? 0;
-
-                  return _ProductCard(
-                    product: product,
-                    quantity: qty,
-                    onAddToCart: () => _addToCart(product.id),
-                    onIncrement: () => _addToCart(product.id),
-                    onDecrement: () => _removeFromCart(product.id),
-                  );
-                },
-              ),
-            ),
-
-            // ── Sticky Bottom Cart Summary Bar ──────────────────────────────
-            if (_totalCartCount > 0) _buildStickyCartBar(),
-          ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: SafeArea(
+          bottom: false,
+          child: _buildTopBar(),
         ),
       ),
+      body: Column(
+        children: [
+          const SizedBox(height: 8),
+
+          // ── Category Filter Chips ───────────────────────────────────────
+          _buildCategoryChips(),
+
+          const SizedBox(height: 10),
+
+          // ── Search & Filter Input ───────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildSearchBar(),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Product Cards List ──────────────────────────────────────────
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              itemCount: displayProducts.length,
+              separatorBuilder: (_, i) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final product = displayProducts[index];
+                final qty = _cart[product.id] ?? 0;
+
+                return _ProductCard(
+                  product: product,
+                  quantity: qty,
+                  onAddToCart: () => _addToCart(product.id),
+                  onIncrement: () => _addToCart(product.id),
+                  onDecrement: () => _removeFromCart(product.id),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: _totalCartCount > 0 ? _buildStickyCartBar() : null,
     );
   }
 
   // ── Top Bar ───────────────────────────────────────────────────────────────
 
   Widget _buildTopBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(4, 4, 16, 8),
       child: Row(
         children: [
           IconButton(
@@ -599,7 +600,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
                   'Products & Spare Parts',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
                   ),
@@ -608,8 +609,10 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
                 Text(
                   'Genuine spare parts & products delivered to your doorstep.',
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     color: Color(0xFF64748B),
                   ),
                 ),
@@ -1014,7 +1017,9 @@ class _ProductCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 // Tags
-                Row(
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     // Blue tag
                     Container(
@@ -1035,7 +1040,6 @@ class _ProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
 
                     // Green tag
                     Container(
