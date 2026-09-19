@@ -69,8 +69,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 220,
       tag1: 'Universal',
       tag2: 'High Quality',
-      imageUrl:
-          'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/ac_power_cord.jpg',
       fallbackIcon: Icons.power_rounded,
     ),
     _ProductItem(
@@ -82,8 +81,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 2200,
       tag1: 'Original',
       tag2: '1 Year Warranty',
-      imageUrl:
-          'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/ac_pcb.jpg',
       fallbackIcon: Icons.memory_rounded,
     ),
     _ProductItem(
@@ -95,8 +93,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 199,
       tag1: 'Durable',
       tag2: 'Weather Resistant',
-      imageUrl:
-          'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/solar_junction_box.jpg',
       fallbackIcon: Icons.solar_power_rounded,
     ),
     _ProductItem(
@@ -108,8 +105,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 200,
       tag1: 'Universal',
       tag2: 'Easy Install',
-      imageUrl:
-          'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/cctv_camera_mount.jpg',
       fallbackIcon: Icons.videocam_rounded,
     ),
     _ProductItem(
@@ -121,8 +117,7 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 199,
       tag1: 'Brass',
       tag2: 'Long Life',
-      imageUrl:
-          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/flush_valve.jpg',
       fallbackIcon: Icons.water_drop_rounded,
     ),
     _ProductItem(
@@ -134,87 +129,8 @@ class _ShopPartsScreenState extends State<ShopPartsScreen> {
       originalPrice: 90,
       tag1: 'High Performance',
       tag2: 'Durable',
-      imageUrl:
-          'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
+      assetPath: 'assets/images/products/fan_capacitor.jpg',
       fallbackIcon: Icons.battery_charging_full_rounded,
-    ),
-    _ProductItem(
-      id: 7,
-      title: 'Cleaning Spray Bottle',
-      description: 'Refillable spray bottle',
-      category: 'Appliances',
-      price: 70,
-      originalPrice: 99,
-      tag1: 'Multi Purpose',
-      tag2: 'Premium',
-      imageUrl:
-          'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.cleaning_services_rounded,
-    ),
-    _ProductItem(
-      id: 8,
-      title: 'MCB',
-      description: 'High-quality MCB - 6A, 10A, 16A, 20A, 32A',
-      category: 'Electrical',
-      price: 189,
-      originalPrice: 235,
-      tag1: 'Branded',
-      tag2: 'ISI Certified',
-      imageUrl:
-          'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.toggle_on_rounded,
-    ),
-    _ProductItem(
-      id: 9,
-      title: 'Fan Motor',
-      description: 'Replacement ceiling fan motor',
-      category: 'Electrical',
-      price: 899,
-      originalPrice: 1200,
-      tag1: 'Heavy Duty',
-      tag2: 'Long Life',
-      imageUrl:
-          'https://images.unsplash.com/photo-1541123437800-1bb1317badc2?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.mode_fan_off_rounded,
-    ),
-    _ProductItem(
-      id: 10,
-      title: 'Defrost Thermostat Sensor',
-      description: 'Universal refrigerator sensor',
-      category: 'Appliances',
-      price: 289,
-      originalPrice: 380,
-      tag1: 'OEM Quality',
-      tag2: '6 Months Warranty',
-      imageUrl:
-          'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.kitchen_rounded,
-    ),
-    _ProductItem(
-      id: 11,
-      title: 'RO Membrane 75 GPD',
-      description: 'High TDS water filtration membrane',
-      category: 'Plumbing',
-      price: 649,
-      originalPrice: 899,
-      tag1: 'Original',
-      tag2: '100% Genuine',
-      imageUrl:
-          'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.science_rounded,
-    ),
-    _ProductItem(
-      id: 12,
-      title: 'Geyser Heating Element',
-      description: '2000W copper heating coil',
-      category: 'Appliances',
-      price: 499,
-      originalPrice: 650,
-      tag1: 'Heavy Duty',
-      tag2: 'Shock Proof',
-      imageUrl:
-          'https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=300&q=80',
-      fallbackIcon: Icons.electric_bolt_rounded,
     ),
   ];
 
@@ -883,7 +799,7 @@ class _ProductItem {
     required this.originalPrice,
     required this.tag1,
     required this.tag2,
-    required this.imageUrl,
+    required this.assetPath,
     required this.fallbackIcon,
   });
 
@@ -895,7 +811,7 @@ class _ProductItem {
   final int originalPrice;
   final String tag1;
   final String tag2;
-  final String imageUrl;
+  final String assetPath;
   final IconData fallbackIcon;
 }
 
@@ -943,8 +859,8 @@ class _ProductCard extends StatelessWidget {
               border: Border.all(color: const Color(0xFFF1F5F9)),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.network(
-              product.imageUrl,
+            child: Image.asset(
+              product.assetPath,
               fit: BoxFit.cover,
               errorBuilder: (_, e, s) => Center(
                 child: Icon(
@@ -953,16 +869,6 @@ class _ProductCard extends StatelessWidget {
                   color: const Color(0xFF94A3B8),
                 ),
               ),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(
-                  child: Icon(
-                    product.fallbackIcon,
-                    size: 32,
-                    color: const Color(0xFF94A3B8),
-                  ),
-                );
-              },
             ),
           ),
           const SizedBox(width: 10),
