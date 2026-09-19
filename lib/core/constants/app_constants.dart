@@ -37,4 +37,22 @@ abstract final class AppStrings {
   static const String continueWithApple = 'Continue with Apple';
   static const String newToQuickox = 'New to Quickox? ';
   static const String createAccount = 'Create an account';
+
+  // ── Sign Up ────────────────────────────────────────────────────────────────
+  static const String joinQuickox = 'Join as Partner';
+  static const String signUpSubtitle = 'Register as a certified service technician';
+  static const String fullName = 'Full Name';
+  static const String fullNameHint = 'e.g. Rahul Sharma';
+  static const String email = 'Email Address';
+  static const String emailHint = 'e.g. rahul.sharma@example.com';
+  static const String primaryTrade = 'Primary Skill / Trade';
+  static const String selectTrade = 'Select your trade';
+  static const String serviceCity = 'Service City / Zone';
+  static const String serviceCityHint = 'e.g. Haldia Central';
+  static const String experience = 'Experience';
+  static const String selectExperience = 'Years of experience';
+  static const String termsNotice = 'I agree to the Quickox Partner Terms and Service Standards';
+  static const String registerButton = 'Register as Technician';
+  static const String alreadyRegistered = 'Already registered? ';
+  static const String logIn = 'Log in';
 }
