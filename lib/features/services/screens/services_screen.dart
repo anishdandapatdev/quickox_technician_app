@@ -178,14 +178,35 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               bottomRight: Radius.circular(20),
                             ),
                             child: Image.asset(
-                              AppAssets.technicianRohit,
+                              AppAssets.technicianAvatar,
                               height: 120,
                               width: 105,
                               fit: BoxFit.cover,
                               errorBuilder: (_, e, s) => Image.asset(
-                                AppAssets.technician,
+                                AppAssets.technicianRohit,
                                 height: 120,
-                                fit: BoxFit.contain,
+                                width: 105,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, e2, s2) => Image.network(
+                                  'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80',
+                                  height: 120,
+                                  width: 105,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, e3, s3) => Container(
+                                    height: 120,
+                                    width: 105,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFBAE6FD),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.engineering_rounded,
+                                        size: 48,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
