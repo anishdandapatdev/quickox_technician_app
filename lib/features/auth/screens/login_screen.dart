@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/common_widgets.dart';
 import '../models/country_code.dart';
-import '../widgets/country_picker_prefix.dart';
+import '../widgets/rounded_phone_input.dart';
 import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
 
@@ -96,9 +95,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _appleLogin() {
-    _googleLogin();
-  }
 
   void _createAccount() {
     Navigator.push(
@@ -127,31 +123,7 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // ── Top Bar with back arrow ──────────────────────────────
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.bgSecondary,
-                            border: Border.all(color: AppColors.border),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 16,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        onPressed: () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // ── Logo ──────────────────────────────────────────────────
                     _Logo(),
@@ -167,28 +139,25 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     const SizedBox(height: AppSpacing.xxl),
 
-                    // ── Phone Field ───────────────────────────────────────────
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        AppStrings.mobileNumber,
-                        style: AppTextStyles.labelMd
-                            .copyWith(color: AppColors.textSecondary),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _PhoneField(
+                    // ── Rounded Phone Field ───────────────────────────────────
+                    RoundedPhoneInput(
                       controller: _phoneController,
                       selectedCountry: _selectedCountry,
                       onCountryChanged: (c) =>
                           setState(() => _selectedCountry = c),
+                      validator: (value) {
+                        if (value == null || value.trim().length < 10) {
+                          return 'Enter a valid 10-digit mobile number';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
                     // ── Send OTP Button ───────────────────────────────────────
                     GradientButton(
                       label: AppStrings.sendOtp,
-                      onPressed: _isValid ? _sendOtp : null,
+                      onPressed: _isLoading ? null : _sendOtp,
                       isLoading: _isLoading,
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -202,16 +171,6 @@ class _LoginScreenState extends State<LoginScreen>
                       label: AppStrings.continueWithGoogle,
                       icon: const _GoogleIcon(),
                       onPressed: _googleLogin,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    SocialLoginButton(
-                      label: AppStrings.continueWithApple,
-                      icon: const Icon(
-                        Icons.apple,
-                        size: 22,
-                        color: AppColors.textPrimary,
-                      ),
-                      onPressed: _appleLogin,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
 
@@ -247,63 +206,21 @@ class _Logo extends StatelessWidget {
   }
 }
 
-class _PhoneField extends StatelessWidget {
-  const _PhoneField({
-    required this.controller,
-    required this.selectedCountry,
-    required this.onCountryChanged,
-  });
-
-  final TextEditingController controller;
-  final CountryCode selectedCountry;
-  final ValueChanged<CountryCode> onCountryChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.phone,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(10),
-      ],
-      style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: '98765 43210',
-        prefixIcon: CountryPickerPrefix(
-          selected: selectedCountry,
-          onChanged: onCountryChanged,
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().length < 10) {
-          return 'Enter a valid 10-digit mobile number';
-        }
-        return null;
-      },
-    );
-  }
-}
 
 class _GoogleIcon extends StatelessWidget {
   const _GoogleIcon();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Image.asset(
+      AppAssets.google,
       width: 22,
       height: 22,
-      decoration: const BoxDecoration(shape: BoxShape.circle),
-      child: const Text(
-        'G',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF4285F4),
-          height: 1.3,
-        ),
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const Icon(
+        Icons.g_mobiledata_rounded,
+        size: 22,
+        color: Color(0xFF4285F4),
       ),
     );
   }

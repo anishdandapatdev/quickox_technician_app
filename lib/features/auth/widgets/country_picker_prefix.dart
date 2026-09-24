@@ -19,18 +19,9 @@ class CountryPickerPrefix extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        final chosen = await showModalBottomSheet<CountryCode>(
-          context: context,
-          backgroundColor: AppColors.bgPrimary,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppRadius.lg),
-            ),
-          ),
-          builder: (ctx) => _CountryPickerSheet(
-            countries: CountryCode.supportedCountries,
-            selected: selected,
-          ),
+        final chosen = await showCountryPickerSheet(
+          context,
+          selected: selected,
         );
         if (chosen != null) onChanged(chosen);
       },
@@ -68,8 +59,28 @@ class CountryPickerPrefix extends StatelessWidget {
   }
 }
 
-class _CountryPickerSheet extends StatelessWidget {
-  const _CountryPickerSheet({
+Future<CountryCode?> showCountryPickerSheet(
+  BuildContext context, {
+  required CountryCode selected,
+}) {
+  return showModalBottomSheet<CountryCode>(
+    context: context,
+    backgroundColor: AppColors.bgPrimary,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppRadius.lg),
+      ),
+    ),
+    builder: (ctx) => CountryPickerSheet(
+      countries: CountryCode.supportedCountries,
+      selected: selected,
+    ),
+  );
+}
+
+class CountryPickerSheet extends StatelessWidget {
+  const CountryPickerSheet({
+    super.key,
     required this.countries,
     required this.selected,
   });

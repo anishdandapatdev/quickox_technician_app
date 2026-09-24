@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/common_widgets.dart';
 import '../models/country_code.dart';
-import '../widgets/country_picker_prefix.dart';
+import '../widgets/rounded_phone_input.dart';
 import 'otp_verification_screen.dart';
 
 /// Customer Sign Up Screen: Phone number, Send OTP, and Sign in with Google
@@ -101,29 +100,6 @@ class _SignUpScreenState extends State<SignUpScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.sm),
-          child: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.bgSecondary,
-                border: Border.all(color: AppColors.border),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 16,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -139,6 +115,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    const SizedBox(height: AppSpacing.xl),
                     // ── Logo ──────────────────────────────────────────────────
                     Image.asset(
                       AppAssets.logo,
@@ -162,38 +139,12 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ),
                     const SizedBox(height: AppSpacing.xxl),
 
-                    // ── Mobile Number Field ───────────────────────────────────
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        AppStrings.mobileNumber,
-                        style: AppTextStyles.labelMd.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextFormField(
+                    // ── Rounded Phone Field ───────────────────────────────────
+                    RoundedPhoneInput(
                       controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      style: AppTextStyles.bodyLg.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: '98765 43210',
-                        prefixIcon: CountryPickerPrefix(
-                          selected: _selectedCountry,
-                          onChanged: (c) => setState(() => _selectedCountry = c),
-                        ),
-                        prefixIconConstraints: const BoxConstraints(
-                          minWidth: 0,
-                          minHeight: 0,
-                        ),
-                      ),
+                      selectedCountry: _selectedCountry,
+                      onCountryChanged: (c) =>
+                          setState(() => _selectedCountry = c),
                       validator: (v) {
                         if (v == null || v.trim().length < 10) {
                           return 'Enter a valid 10-digit mobile number';
@@ -207,7 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     GradientButton(
                       label: AppStrings.sendOtp,
                       isLoading: _isLoading,
-                      onPressed: _isValid ? _handleSendOtp : null,
+                      onPressed: _isLoading ? null : _handleSendOtp,
                     ),
                     const SizedBox(height: AppSpacing.xl),
 
@@ -219,18 +170,6 @@ class _SignUpScreenState extends State<SignUpScreen>
                     SocialLoginButton(
                       label: AppStrings.continueWithGoogle,
                       icon: const _GoogleLetterIcon(),
-                      onPressed: _handleGoogleSignIn,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // ── Sign in with Apple Button ─────────────────────────────
-                    SocialLoginButton(
-                      label: AppStrings.continueWithApple,
-                      icon: const Icon(
-                        Icons.apple,
-                        size: 22,
-                        color: AppColors.textPrimary,
-                      ),
                       onPressed: _handleGoogleSignIn,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
@@ -269,19 +208,15 @@ class _GoogleLetterIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Image.asset(
+      AppAssets.google,
       width: 22,
       height: 22,
-      decoration: const BoxDecoration(shape: BoxShape.circle),
-      child: const Text(
-        'G',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF4285F4),
-          height: 1.3,
-        ),
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const Icon(
+        Icons.g_mobiledata_rounded,
+        size: 22,
+        color: Color(0xFF4285F4),
       ),
     );
   }
