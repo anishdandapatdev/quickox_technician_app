@@ -551,7 +551,7 @@ class _HorizontalCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 106,
+      constraints: const BoxConstraints(minHeight: 118),
       decoration: BoxDecoration(
         color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -565,14 +565,15 @@ class _HorizontalCategoryCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          // ── Left: Image with Badge ────────────────────────────────────────
-          SizedBox(
-            width: 128,
-            height: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Left: Image with Badge ────────────────────────────────────────
+            SizedBox(
+              width: 128,
+              child: Stack(
+                fit: StackFit.expand,
               children: [
                 Image.network(
                   item.imageUrl,
@@ -754,6 +755,7 @@ class _HorizontalCategoryCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
