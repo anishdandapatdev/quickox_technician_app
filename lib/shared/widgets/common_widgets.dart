@@ -27,39 +27,41 @@ class OrDivider extends StatelessWidget {
   }
 }
 
-/// Gradient primary button — wraps ElevatedButton with a LinearGradient
+/// Primary / Action button — uses the app's solid Royal Blue primary color by default
 class GradientButton extends StatelessWidget {
   const GradientButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.isLoading = false,
-    this.gradient = AppColors.primaryGradient,
+    this.gradient,
+    this.backgroundColor = AppColors.primary,
+    this.borderRadius,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
-  final LinearGradient gradient;
+  final LinearGradient? gradient;
+  final Color backgroundColor;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(AppRadius.full);
+    final isEnabled = onPressed != null && !isLoading;
+
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: onPressed != null ? gradient : null,
-          color: onPressed == null ? AppColors.border : null,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: [
-            if (onPressed != null)
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.25),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-          ],
+          gradient: isEnabled ? gradient : null,
+          color: gradient == null
+              ? (isEnabled ? backgroundColor : backgroundColor.withValues(alpha: 0.5))
+              : (isEnabled ? null : AppColors.border),
+          borderRadius: effectiveRadius,
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
@@ -67,7 +69,7 @@ class GradientButton extends StatelessWidget {
             shadowColor: Colors.transparent,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: effectiveRadius,
             ),
           ),
           onPressed: onPressed,
@@ -80,7 +82,13 @@ class GradientButton extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation(Colors.white),
                   ),
                 )
-              : Text(label, style: AppTextStyles.labelLg),
+              : Text(
+                  label,
+                  style: AppTextStyles.labelLg.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ),
     );
@@ -94,18 +102,29 @@ class SocialLoginButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    this.borderRadius,
   });
 
   final String label;
   final Widget icon;
   final VoidCallback onPressed;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(AppRadius.full);
+
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: effectiveRadius,
+          ),
+          side: const BorderSide(color: AppColors.border, width: 1.2),
+        ),
         onPressed: onPressed,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
