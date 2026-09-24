@@ -31,11 +31,15 @@ class HomeScreen extends StatelessWidget {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  'Haldia Central, WB',
-                  style: AppTextStyles.labelMd.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                Flexible(
+                  child: Text(
+                    'Haldia Central, WB',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.labelMd.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 const Icon(
@@ -102,10 +106,14 @@ class HomeScreen extends StatelessWidget {
                       size: 22,
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Search electrical, AC, plumbing...',
-                      style: AppTextStyles.bodyMd.copyWith(
-                        color: AppColors.textMuted,
+                    Expanded(
+                      child: Text(
+                        'Search electrical, AC, plumbing...',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMd.copyWith(
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ),
                   ],
@@ -216,7 +224,9 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Our Services', style: AppTextStyles.h3),
+                  Expanded(
+                    child: Text('Our Services', style: AppTextStyles.h3),
+                  ),
                   GestureDetector(
                     onTap: () => onNavigateTab(1), // go to services
                     child: Text(
@@ -366,18 +376,18 @@ class _CategoryItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 28),
+              child: Icon(icon, color: color, size: 26),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               title,
               style: AppTextStyles.labelMd.copyWith(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -410,7 +420,7 @@ class _PopularCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 240,
+      width: 250,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.bgPrimary,
@@ -477,31 +487,36 @@ class _PopularCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    price,
-                    style: AppTextStyles.h3.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: price,
+                        style: AppTextStyles.h3.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const WidgetSpan(child: SizedBox(width: 4)),
+                      TextSpan(
+                        text: originalPrice,
+                        style: AppTextStyles.bodySm.copyWith(
+                          decoration: TextDecoration.lineThrough,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    originalPrice,
-                    style: AppTextStyles.bodySm.copyWith(
-                      decoration: TextDecoration.lineThrough,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 6),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  minimumSize: const Size(60, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size(52, 32),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
