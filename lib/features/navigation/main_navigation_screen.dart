@@ -6,8 +6,9 @@ import '../services/screens/services_screen.dart';
 import '../membership/screens/membership_screen.dart';
 import '../bookings/screens/bookings_screen.dart';
 import '../profile/screens/profile_screen.dart';
+import 'widgets/modern_bottom_nav_bar.dart';
 
-/// Main Application Shell hosting the 5-tab BottomNavigationBar
+/// Main Application Shell hosting the modern 5-tab BottomNavigationBar
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({
     super.key,
@@ -43,64 +44,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const ProfileScreen(),
     ];
 
+    const navItems = [
+      ModernNavItem(
+        unselectedIcon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+        label: AppStrings.navHome,
+      ),
+      ModernNavItem(
+        unselectedIcon: Icons.grid_view_outlined,
+        selectedIcon: Icons.grid_view_rounded,
+        label: AppStrings.navServices,
+      ),
+      ModernNavItem(
+        unselectedIcon: Icons.workspace_premium_outlined,
+        selectedIcon: Icons.workspace_premium_rounded,
+        label: AppStrings.navMembership,
+      ),
+      ModernNavItem(
+        unselectedIcon: Icons.calendar_month_outlined,
+        selectedIcon: Icons.calendar_month_rounded,
+        label: AppStrings.navBook,
+        badgeCount: 1,
+      ),
+      ModernNavItem(
+        unselectedIcon: Icons.person_outline_rounded,
+        selectedIcon: Icons.person_rounded,
+        label: AppStrings.navProfile,
+      ),
+    ];
+
     return Scaffold(
+      backgroundColor: AppColors.bgSecondary,
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.bgPrimary,
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 10,
-              offset: Offset(0, -3),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
+        color: AppColors.bgSecondary,
+        child: ModernBottomNavBar(
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.bgPrimary,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textMuted,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home_rounded),
-              label: AppStrings.navHome,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.handyman_outlined),
-              activeIcon: Icon(Icons.handyman_rounded),
-              label: AppStrings.navServices,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.workspace_premium_outlined),
-              activeIcon: Icon(Icons.workspace_premium_rounded),
-              label: AppStrings.navMembership,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_outlined),
-              activeIcon: Icon(Icons.calendar_month_rounded),
-              label: AppStrings.navBook,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
-              activeIcon: Icon(Icons.person_rounded),
-              label: AppStrings.navProfile,
-            ),
-          ],
+          items: navItems,
+          style: ModernNavStyle.floatingPill,
         ),
       ),
     );
