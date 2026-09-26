@@ -7,6 +7,7 @@ import 'package:quickox_technician_app/features/auth/screens/profile_setup_scree
 import 'package:quickox_technician_app/features/auth/widgets/rounded_password_input.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_phone_input.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_text_input.dart';
+import 'package:quickox_technician_app/features/bookings/screens/bookings_screen.dart';
 import 'package:quickox_technician_app/features/navigation/main_navigation_screen.dart';
 import 'package:quickox_technician_app/features/navigation/widgets/modern_bottom_nav_bar.dart';
 import 'package:quickox_technician_app/features/profile/screens/profile_screen.dart';
@@ -258,6 +259,122 @@ void main() {
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
     expect(find.text('Log Out'), findsOneWidget);
+  });
+
+  testWidgets('BookingsScreen renders Active and Completed tabs and switches correctly', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BookingsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Bookings'), findsOneWidget);
+    expect(find.text('Track your service orders and membership subscriptions'), findsOneWidget);
+    expect(find.text('Services (4)'), findsOneWidget);
+    expect(find.text('Membership Plans (2)'), findsOneWidget);
+
+    // Tier 2 service filters
+    expect(find.text('Active (1)'), findsOneWidget);
+    expect(find.text('Completed (2)'), findsOneWidget);
+    expect(find.text('Cancelled (1)'), findsOneWidget);
+
+    // Active booking content
+    expect(find.text('AC Deep Clean & Jet Service'), findsOneWidget);
+    expect(find.text('Booking ID: QX-98241'), findsOneWidget);
+    expect(find.text('ACTIVE'), findsOneWidget);
+    expect(find.text('Confirmed'), findsOneWidget);
+    expect(find.text('Need another service?'), findsOneWidget);
+
+    // Tap View Details to open bottom sheet
+    await tester.ensureVisible(find.text('View Details').first);
+    await tester.tap(find.text('View Details').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Booking Details'), findsOneWidget);
+    expect(find.text('Start Service Verification Code'), findsOneWidget);
+    expect(find.text('4821'), findsOneWidget);
+    await tester.tap(find.text('Close Details'));
+    await tester.pumpAndSettle();
+
+    // Switch to Completed filter
+    await tester.tap(find.text('Completed (2)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Switchboard & Socket Installation'), findsOneWidget);
+    expect(find.text('Bathroom Tap Leakage Repair'), findsOneWidget);
+    expect(find.text('Booking ID: QX-87119'), findsOneWidget);
+
+    // Switch to Tier 1: Membership Plans
+    await tester.tap(find.text('Membership Plans (2)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Active Plans (1)'), findsOneWidget);
+    expect(find.text('Expired / History (1)'), findsOneWidget);
+    expect(find.text('Quickox Plus Care Club'), findsOneWidget);
+    expect(find.text('3 Months Plan'), findsOneWidget);
+    expect(find.text('42 Days Remaining'), findsOneWidget);
+    expect(find.text('Renew'), findsOneWidget);
+  });
+
+  testWidgets('BookingsScreen renders on small 360x640 screen without overflow', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(720, 1280);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BookingsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Bookings'), findsOneWidget);
+    expect(find.text('Services (4)'), findsOneWidget);
+  });
+
+  testWidgets('BookingsScreen search filters bookings dynamically across sections', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BookingsScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap search icon beside My Bookings to open search field
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pumpAndSettle();
+
+    // Verify search TextField renders in the rounded pill input
+    final searchField = find.byType(TextField);
+    expect(searchField, findsOneWidget);
+
+    // Type "Jet" into search field
+    await tester.enterText(searchField, 'Jet');
+    await tester.pumpAndSettle();
+
+    // Verify dynamic match count & filtered card
+    expect(find.text('Services (1)'), findsOneWidget);
+    expect(find.text('AC Deep Clean & Jet Service'), findsOneWidget);
+
+    // Clear search using the close icon in the search box
+    await tester.tap(find.byIcon(Icons.close_rounded).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Services (4)'), findsOneWidget);
   });
 }
 
