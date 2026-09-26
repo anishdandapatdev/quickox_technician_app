@@ -216,9 +216,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: _verticals.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: AppSpacing.sm,
-                    crossAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 0.92,
+                    mainAxisSpacing: AppSpacing.md,
+                    crossAxisSpacing: AppSpacing.md,
+                    childAspectRatio: 1.0,
                   ),
                   itemBuilder: (context, index) {
                     final vert = _verticals[index];
@@ -1087,7 +1087,6 @@ class _VerticalShowcaseCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.bgPrimary,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -1100,136 +1099,79 @@ class _VerticalShowcaseCard extends StatelessWidget {
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: item.bgColor,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  child: Icon(item.icon, color: item.color, size: 18),
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: item.isLive
-                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                          : (item.badgeText.contains('SOS')
-                              ? const Color(0xFFEF4444).withValues(alpha: 0.12)
-                              : const Color(0xFFF59E0B).withValues(alpha: 0.12)),
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (item.isLive) ...[
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF10B981),
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                        ],
-                        Flexible(
-                          child: Text(
-                            item.badgeText,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w800,
-                              color: item.isLive
-                                  ? const Color(0xFF047857)
-                                  : (item.badgeText.contains('SOS')
-                                      ? const Color(0xFFB91C1C)
-                                      : const Color(0xFFB45309)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            // Card Image
+            Expanded(
+              child: _buildImage(item.imageUrl, item.name),
             ),
-            const SizedBox(height: 4),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.labelMd.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                    color: AppColors.textPrimary,
-                  ),
+
+            // Title Name (Service Name)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 10,
+              ),
+              child: Text(
+                item.name,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelMd.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                  color: AppColors.textPrimary,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  item.tagline,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodySm.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 9.5,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (item.tags.isNotEmpty)
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(
-                        item.tags.first,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: item.color,
-                        ),
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 14,
-                  color: AppColors.textMuted,
-                ),
-              ],
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImage(String url, String name) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _fallbackPlaceholder(name),
+      );
+    } else if (url.startsWith('http')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _fallbackPlaceholder(name),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: const Color(0xFFF1F5F9),
+            child: const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    return _fallbackPlaceholder(name);
+  }
+
+  Widget _fallbackPlaceholder(String name) {
+    return Container(
+      color: item.bgColor,
+      child: Center(
+        child: Icon(item.icon, size: 36, color: item.color),
       ),
     );
   }
