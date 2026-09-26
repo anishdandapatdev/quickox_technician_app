@@ -35,6 +35,11 @@ void main() {
     // Verify PageView is present for horizontal image slider
     expect(find.byType(PageView), findsOneWidget);
 
+    // Verify Super App Verticals from explore_service.jsx are rendered
+    expect(find.text('Home Service'), findsOneWidget);
+    expect(find.text('Food Delivery'), findsOneWidget);
+    expect(find.text('Medicine Delivery'), findsOneWidget);
+
     // Verify tapping View All on categories navigates to Services (tab 1)
     final viewAllFinders = find.text('View All');
     expect(viewAllFinders, findsWidgets);

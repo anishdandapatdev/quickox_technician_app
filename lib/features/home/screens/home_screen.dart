@@ -6,10 +6,11 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/services/firebase_services_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../services/screens/category_detail_screen.dart';
 
 /// Customer Home Screen featuring:
 /// - Horizontal auto-scrolling promotional Image Carousel (replaces search bar)
-/// - Service Categories Grid
+/// - Real-time Super App Service Verticals (Home Service, Medicine Delivery, Food Delivery, etc. matching explore_service.jsx)
 /// - Quickox Care Club VIP Membership Banner
 /// - Dynamic Real-time Services (3 or 4 services loaded from Firebase Firestore with fallback)
 /// - "View All" button linking directly to the Services Screen (tab 1)
@@ -31,6 +32,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final FirebaseServicesService _servicesService;
+  List<ServiceVerticalItem> _verticals = FirebaseServicesService.defaultVerticals;
   List<ServiceItem> _services = [];
   bool _isLoadingServices = true;
 
@@ -46,21 +48,43 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoadingServices = true);
 
     try {
-      // Fetch 4 dynamic services from Firestore 'services' collection (or fallback)
-      final items = await _servicesService.fetchServices(limit: 4);
+      // Fetch dynamic verticals & services from Firebase Firestore
+      final results = await Future.wait([
+        _servicesService.fetchVerticals(),
+        _servicesService.fetchServices(limit: 4),
+      ]);
+
       if (mounted) {
         setState(() {
-          _services = items;
+          _verticals = results[0] as List<ServiceVerticalItem>;
+          _services = results[1] as List<ServiceItem>;
           _isLoadingServices = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
+          _verticals = FirebaseServicesService.defaultVerticals;
           _services = FirebaseServicesService.defaultServices.take(4).toList();
           _isLoadingServices = false;
         });
       }
+    }
+  }
+
+  void _onVerticalTapped(ServiceVerticalItem vert) {
+    if (vert.id == 'home_care') {
+      widget.onNavigateTab(1); // Go to services catalog tab
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CategoryDetailScreen(
+            headerTitle: vert.name,
+            headerSubtitle: vert.tagline,
+          ),
+        ),
+      );
     }
   }
 
@@ -146,14 +170,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: AppSpacing.md),
 
-              // ── Service Categories ──────────────────────────────────────────
+              // ── Dynamic Super App Verticals (matches explore_service.jsx) ───
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text('Our Services', style: AppTextStyles.h3),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Our Services', style: AppTextStyles.h3),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Super App verticals loaded from backend',
+                            style: AppTextStyles.bodySm.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     GestureDetector(
                       onTap: () => widget.onNavigateTab(1), // go to services
@@ -170,53 +207,26 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
 
+              // Verticals 2-Column Grid
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: GridView.count(
+                child: GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 3,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  childAspectRatio: 0.95,
-                  children: [
-                    _CategoryItem(
-                      icon: Icons.ac_unit_rounded,
-                      title: 'AC Service',
-                      color: const Color(0xFF0284C7),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                    _CategoryItem(
-                      icon: Icons.bolt_rounded,
-                      title: 'Electrician',
-                      color: const Color(0xFFEAB308),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                    _CategoryItem(
-                      icon: Icons.water_drop_rounded,
-                      title: 'Plumber',
-                      color: const Color(0xFF2563EB),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                    _CategoryItem(
-                      icon: Icons.home_repair_service_rounded,
-                      title: 'Appliances',
-                      color: const Color(0xFFE87722),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                    _CategoryItem(
-                      icon: Icons.cleaning_services_rounded,
-                      title: 'Cleaning',
-                      color: const Color(0xFF0D9488),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                    _CategoryItem(
-                      icon: Icons.format_paint_rounded,
-                      title: 'Painting',
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () => widget.onNavigateTab(1),
-                    ),
-                  ],
+                  itemCount: _verticals.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: AppSpacing.sm,
+                    crossAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: 0.92,
+                  ),
+                  itemBuilder: (context, index) {
+                    final vert = _verticals[index];
+                    return _VerticalShowcaseCard(
+                      item: vert,
+                      onTap: () => _onVerticalTapped(vert),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -1060,20 +1070,16 @@ class _ServiceListCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Service Category Item
+// Super App Vertical Showcase Card (matches explore_service.jsx)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CategoryItem extends StatelessWidget {
-  const _CategoryItem({
-    required this.icon,
-    required this.title,
-    required this.color,
+class _VerticalShowcaseCard extends StatelessWidget {
+  const _VerticalShowcaseCard({
+    required this.item,
     required this.onTap,
   });
 
-  final IconData icon;
-  final String title;
-  final Color color;
+  final ServiceVerticalItem item;
   final VoidCallback onTap;
 
   @override
@@ -1081,38 +1087,146 @@ class _CategoryItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.bgPrimary,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.border),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 6,
+              color: Color(0x06000000),
+              blurRadius: 8,
               offset: Offset(0, 2),
             ),
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 26),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: item.bgColor,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(item.icon, color: item.color, size: 18),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: item.isLive
+                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                          : (item.badgeText.contains('SOS')
+                              ? const Color(0xFFEF4444).withValues(alpha: 0.12)
+                              : const Color(0xFFF59E0B).withValues(alpha: 0.12)),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (item.isLive) ...[
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                        ],
+                        Flexible(
+                          child: Text(
+                            item.badgeText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: item.isLive
+                                  ? const Color(0xFF047857)
+                                  : (item.badgeText.contains('SOS')
+                                      ? const Color(0xFFB91C1C)
+                                      : const Color(0xFFB45309)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: AppTextStyles.labelMd.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelMd.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.tagline,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 9.5,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (item.tags.isNotEmpty)
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: item.color.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        item.tags.first,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          color: item.color,
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 14,
+                  color: AppColors.textMuted,
+                ),
+              ],
             ),
           ],
         ),
