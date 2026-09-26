@@ -8,6 +8,7 @@ import 'package:quickox_technician_app/features/auth/widgets/rounded_password_in
 import 'package:quickox_technician_app/features/auth/widgets/rounded_phone_input.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_text_input.dart';
 import 'package:quickox_technician_app/features/bookings/screens/bookings_screen.dart';
+import 'package:quickox_technician_app/features/membership/screens/membership_screen.dart';
 import 'package:quickox_technician_app/features/navigation/main_navigation_screen.dart';
 import 'package:quickox_technician_app/features/navigation/widgets/modern_bottom_nav_bar.dart';
 import 'package:quickox_technician_app/features/profile/screens/profile_screen.dart';
@@ -375,6 +376,109 @@ void main() {
     await tester.tap(find.byIcon(Icons.close_rounded).first);
     await tester.pumpAndSettle();
     expect(find.text('Services (4)'), findsOneWidget);
+  });
+
+  testWidgets('MembershipScreen renders 11 BHK-tailored plans and active subscriber banner', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MembershipScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Title & Active Member Banner
+    expect(find.text('Quickox Care Club'), findsOneWidget);
+    expect(find.text('ACTIVE SUBSCRIBER'), findsOneWidget);
+    expect(find.text('₹899 Plan — 2 BHK Premium Protection'), findsOneWidget);
+
+    // Verify Duration Multiplier Selector
+    expect(find.text('Select Duration & Multiplier'), findsOneWidget);
+    expect(find.text('Save 20% on Yearly'), findsOneWidget);
+    expect(find.text('⭐ 12 Mo'), findsOneWidget);
+
+    // Verify BHK Filter Chips
+    expect(find.text('All BHKs'), findsOneWidget);
+    expect(find.text('1 RK'), findsWidgets);
+    expect(find.text('2 BHK'), findsWidgets);
+
+    // Verify Total Plan Count
+    expect(find.text('Membership Plans (11)'), findsOneWidget);
+
+    // Verify Plans Presence
+    expect(find.text('₹299 Plan'), findsOneWidget);
+    expect(find.text('1 RK Essential Maintenance'), findsOneWidget);
+  });
+
+  testWidgets('MembershipScreen filters by BHK and opens checkout bottom sheet', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MembershipScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap '1 RK' filter chip
+    await tester.tap(find.widgetWithText(FilterChip, '1 RK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Membership Plans (1)'), findsOneWidget);
+    expect(find.text('₹299 Plan'), findsOneWidget);
+
+    // Open Checkout Bottom Sheet
+    await tester.ensureVisible(find.text('Choose Plan').first);
+    await tester.tap(find.text('Choose Plan').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select Duration'), findsOneWidget);
+    expect(find.text('Apply Promo Code'), findsOneWidget);
+    expect(find.text('Payment Method'), findsOneWidget);
+    expect(find.text('Total Payable'), findsOneWidget);
+
+    // Apply Coupon Code
+    await tester.enterText(find.byType(TextField).last, 'QUICKOX20');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coupon "QUICKOX20" applied (20% OFF)'), findsOneWidget);
+
+    // Close bottom sheet
+    await tester.tap(find.byType(ElevatedButton).last); // Proceed & Pay
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pumpAndSettle();
+
+    // Verify confirmation modal
+    expect(find.text('Membership Activated!'), findsOneWidget);
+  });
+
+  testWidgets('MembershipScreen renders on small 360x640 screen without overflow', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(720, 1280);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MembershipScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quickox Care Club'), findsOneWidget);
+    expect(find.text('Membership Plans (11)'), findsOneWidget);
   });
 }
 
