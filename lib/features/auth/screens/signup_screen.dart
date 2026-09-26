@@ -5,6 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/common_widgets.dart';
 import '../models/country_code.dart';
 import '../widgets/rounded_phone_input.dart';
+import '../../navigation/main_navigation_screen.dart';
 import 'otp_verification_screen.dart';
 
 /// Customer Sign Up Screen: Phone number, Send OTP, and Sign in with Google
@@ -21,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   CountryCode _selectedCountry = CountryCode.defaultCountry;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   bool _isValid = false;
 
   @override
@@ -63,16 +65,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void _handleGoogleSignIn() {
-    // Navigate to OTP or Profile Setup for Google flow
-    final fullPhone = '${_selectedCountry.code} ${_phoneController.text.trim()}';
-    Navigator.push(
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    // Simulate Google account selection and authentication
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) return;
+    setState(() => _isGoogleLoading = false);
+
+    Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationScreen(
-          phoneNumber: fullPhone.isNotEmpty ? fullPhone : '+91 98765 43210',
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      (route) => false,
     );
   }
 
@@ -144,9 +149,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 // ── Sign in with Google Button ────────────────────────────
                 SocialLoginButton(
-                  label: AppStrings.continueWithGoogle,
+                  label: _isGoogleLoading
+                      ? 'Signing in with Google...'
+                      : AppStrings.continueWithGoogle,
                   icon: const _GoogleLetterIcon(),
-                  onPressed: _handleGoogleSignIn,
+                  isLoading: _isGoogleLoading,
+                  onPressed: (_isLoading || _isGoogleLoading) ? null : _handleGoogleSignIn,
                 ),
                 const SizedBox(height: AppSpacing.xxl),
 

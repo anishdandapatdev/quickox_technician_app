@@ -5,6 +5,7 @@ import 'package:quickox_technician_app/core/theme/app_theme.dart';
 import 'package:quickox_technician_app/features/auth/screens/login_screen.dart';
 import 'package:quickox_technician_app/features/auth/screens/otp_verification_screen.dart';
 import 'package:quickox_technician_app/features/auth/screens/profile_setup_screen.dart';
+import 'package:quickox_technician_app/features/auth/screens/signup_screen.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_password_input.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_phone_input.dart';
 import 'package:quickox_technician_app/features/auth/widgets/rounded_text_input.dart';
@@ -138,6 +139,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Enter a valid 10-digit mobile number'), findsOneWidget);
     expect(find.text('Password is required'), findsOneWidget);
+  });
+
+  testWidgets('LoginScreen Continue with Google logs in directly to MainNavigationScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LoginScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap Continue with Google
+    final googleBtn = find.text('Continue with Google');
+    expect(googleBtn, findsOneWidget);
+    await tester.ensureVisible(googleBtn);
+    await tester.tap(googleBtn);
+    await tester.pump();
+
+    // Verify it does NOT navigate to OtpVerificationScreen
+    expect(find.byType(OtpVerificationScreen), findsNothing);
+
+    // Let the authentication delay complete
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pumpAndSettle();
+
+    // Verify user is directly in MainNavigationScreen
+    expect(find.byType(MainNavigationScreen), findsOneWidget);
+    expect(find.byType(OtpVerificationScreen), findsNothing);
+  });
+
+  testWidgets('SignUpScreen Continue with Google logs in directly to MainNavigationScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SignUpScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap Continue with Google
+    final googleBtn = find.text('Continue with Google');
+    expect(googleBtn, findsOneWidget);
+    await tester.ensureVisible(googleBtn);
+    await tester.tap(googleBtn);
+    await tester.pump();
+
+    // Verify it does NOT navigate to OtpVerificationScreen
+    expect(find.byType(OtpVerificationScreen), findsNothing);
+
+    // Let the authentication delay complete
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pumpAndSettle();
+
+    // Verify user is directly in MainNavigationScreen
+    expect(find.byType(MainNavigationScreen), findsOneWidget);
+    expect(find.byType(OtpVerificationScreen), findsNothing);
   });
 
   testWidgets('OtpVerificationScreen renders elements matching design mockup', (WidgetTester tester) async {

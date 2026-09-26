@@ -103,12 +103,14 @@ class SocialLoginButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.borderRadius,
+    this.isLoading = false,
   });
 
   final String label;
   final Widget icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final BorderRadius? borderRadius;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -125,19 +127,28 @@ class SocialLoginButton extends StatelessWidget {
           ),
           side: const BorderSide(color: AppColors.border, width: 1.2),
         ),
-        onPressed: onPressed,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              label,
-              style: AppTextStyles.labelMd
-                  .copyWith(color: AppColors.textPrimary),
-            ),
-          ],
-        ),
+        onPressed: isLoading ? null : onPressed,
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  icon,
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    label,
+                    style: AppTextStyles.labelMd
+                        .copyWith(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
       ),
     );
   }
