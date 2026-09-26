@@ -15,8 +15,7 @@ class SignUpScreen extends StatefulWidget {
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen>
-    with SingleTickerProviderStateMixin {
+class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
 
@@ -24,28 +23,10 @@ class _SignUpScreenState extends State<SignUpScreen>
   bool _isLoading = false;
   bool _isValid = false;
 
-  late final AnimationController _animCtrl;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
-
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animCtrl,
-      curve: Curves.easeOut,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
-
     _phoneController.addListener(_onPhoneChanged);
-    _animCtrl.forward();
   }
 
   void _onPhoneChanged() {
@@ -58,7 +39,6 @@ class _SignUpScreenState extends State<SignUpScreen>
     _phoneController
       ..removeListener(_onPhoneChanged)
       ..dispose();
-    _animCtrl.dispose();
     super.dispose();
   }
 
@@ -101,100 +81,94 @@ class _SignUpScreenState extends State<SignUpScreen>
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: AppSpacing.xl),
+                // ── Logo ──────────────────────────────────────────────────
+                Image.asset(
+                  AppAssets.logo,
+                  height: 80,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, e, s) => const Icon(
+                    Icons.home_repair_service_rounded,
+                    size: 64,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Title & Subtitle ──────────────────────────────────────
+                Text(AppStrings.signUpTitle, style: AppTextStyles.h2),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  AppStrings.signUpSubtitle,
+                  style: AppTextStyles.bodyMd,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+
+                // ── Rounded Phone Field ───────────────────────────────────
+                RoundedPhoneInput(
+                  controller: _phoneController,
+                  selectedCountry: _selectedCountry,
+                  onCountryChanged: (c) =>
+                      setState(() => _selectedCountry = c),
+                  validator: (v) {
+                    if (v == null || v.trim().length < 10) {
+                      return 'Enter a valid 10-digit mobile number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Send OTP Button ───────────────────────────────────────
+                GradientButton(
+                  label: AppStrings.sendOtp,
+                  isLoading: _isLoading,
+                  onPressed: _isLoading ? null : _handleSendOtp,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
+                // ── Divider ───────────────────────────────────────────────
+                const OrDivider(),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Sign in with Google Button ────────────────────────────
+                SocialLoginButton(
+                  label: AppStrings.continueWithGoogle,
+                  icon: const _GoogleLetterIcon(),
+                  onPressed: _handleGoogleSignIn,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+
+                // ── Already have account footer ───────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: AppSpacing.xl),
-                    // ── Logo ──────────────────────────────────────────────────
-                    Image.asset(
-                      AppAssets.logo,
-                      height: 80,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, e, s) => const Icon(
-                        Icons.home_repair_service_rounded,
-                        size: 64,
-                        color: AppColors.primary,
+                    Text(
+                      AppStrings.alreadyHaveAccount,
+                      style: AppTextStyles.bodyMd,
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Text(
+                        AppStrings.logIn,
+                        style: AppTextStyles.link,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // ── Title & Subtitle ──────────────────────────────────────
-                    Text(AppStrings.signUpTitle, style: AppTextStyles.h2),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      AppStrings.signUpSubtitle,
-                      style: AppTextStyles.bodyMd,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    // ── Rounded Phone Field ───────────────────────────────────
-                    RoundedPhoneInput(
-                      controller: _phoneController,
-                      selectedCountry: _selectedCountry,
-                      onCountryChanged: (c) =>
-                          setState(() => _selectedCountry = c),
-                      validator: (v) {
-                        if (v == null || v.trim().length < 10) {
-                          return 'Enter a valid 10-digit mobile number';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // ── Send OTP Button ───────────────────────────────────────
-                    GradientButton(
-                      label: AppStrings.sendOtp,
-                      isLoading: _isLoading,
-                      onPressed: _isLoading ? null : _handleSendOtp,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // ── Divider ───────────────────────────────────────────────
-                    const OrDivider(),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // ── Sign in with Google Button ────────────────────────────
-                    SocialLoginButton(
-                      label: AppStrings.continueWithGoogle,
-                      icon: const _GoogleLetterIcon(),
-                      onPressed: _handleGoogleSignIn,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    // ── Already have account footer ───────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          AppStrings.alreadyHaveAccount,
-                          style: AppTextStyles.bodyMd,
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Text(
-                            AppStrings.logIn,
-                            style: AppTextStyles.link,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
                   ],
                 ),
-              ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
             ),
           ),
         ),

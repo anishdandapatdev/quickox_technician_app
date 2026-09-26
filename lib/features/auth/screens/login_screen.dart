@@ -17,8 +17,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   // ── State ──────────────────────────────────────────────────────────────────
   final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -28,29 +27,10 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Country data ───────────────────────────────────────────────────────────
   CountryCode _selectedCountry = CountryCode.defaultCountry;
 
-  // ── Animation ──────────────────────────────────────────────────────────────
-  late final AnimationController _fadeCtrl;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
-
   @override
   void initState() {
     super.initState();
-    _fadeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeCtrl,
-      curve: Curves.easeOut,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut));
-
     _phoneController.addListener(_onPhoneChanged);
-    _fadeCtrl.forward();
   }
 
   @override
@@ -58,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen>
     _phoneController
       ..removeListener(_onPhoneChanged)
       ..dispose();
-    _fadeCtrl.dispose();
     super.dispose();
   }
 
@@ -99,7 +78,11 @@ class _LoginScreenState extends State<LoginScreen>
   void _createAccount() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SignUpScreen()),
+      PageRouteBuilder(
+        pageBuilder: (_, _, _) => const SignUpScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 
@@ -109,77 +92,71 @@ class _LoginScreenState extends State<LoginScreen>
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: AppSpacing.xl),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: AppSpacing.xl),
 
-                    // ── Logo ──────────────────────────────────────────────────
-                    _Logo(),
-                    const SizedBox(height: AppSpacing.xl),
+                // ── Logo ──────────────────────────────────────────────────
+                _Logo(),
+                const SizedBox(height: AppSpacing.xl),
 
-                    // ── Welcome Text ──────────────────────────────────────────
-                    Text(AppStrings.welcomeBack, style: AppTextStyles.h2),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      AppStrings.loginSubtitle,
-                      style: AppTextStyles.bodyMd,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    // ── Rounded Phone Field ───────────────────────────────────
-                    RoundedPhoneInput(
-                      controller: _phoneController,
-                      selectedCountry: _selectedCountry,
-                      onCountryChanged: (c) =>
-                          setState(() => _selectedCountry = c),
-                      validator: (value) {
-                        if (value == null || value.trim().length < 10) {
-                          return 'Enter a valid 10-digit mobile number';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // ── Send OTP Button ───────────────────────────────────────
-                    GradientButton(
-                      label: AppStrings.sendOtp,
-                      onPressed: _isLoading ? null : _sendOtp,
-                      isLoading: _isLoading,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // ── Divider ───────────────────────────────────────────────
-                    const OrDivider(),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // ── Social Buttons ────────────────────────────────────────
-                    SocialLoginButton(
-                      label: AppStrings.continueWithGoogle,
-                      icon: const _GoogleIcon(),
-                      onPressed: _googleLogin,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    // ── Sign Up Link ──────────────────────────────────────────
-                    _SignUpFooter(onTap: _createAccount),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
+                // ── Welcome Text ──────────────────────────────────────────
+                Text(AppStrings.welcomeBack, style: AppTextStyles.h2),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  AppStrings.loginSubtitle,
+                  style: AppTextStyles.bodyMd,
+                  textAlign: TextAlign.center,
                 ),
-              ),
+                const SizedBox(height: AppSpacing.xxl),
+
+                // ── Rounded Phone Field ───────────────────────────────────
+                RoundedPhoneInput(
+                  controller: _phoneController,
+                  selectedCountry: _selectedCountry,
+                  onCountryChanged: (c) =>
+                      setState(() => _selectedCountry = c),
+                  validator: (value) {
+                    if (value == null || value.trim().length < 10) {
+                      return 'Enter a valid 10-digit mobile number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Send OTP Button ───────────────────────────────────────
+                GradientButton(
+                  label: AppStrings.sendOtp,
+                  onPressed: _isLoading ? null : _sendOtp,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+
+                // ── Divider ───────────────────────────────────────────────
+                const OrDivider(),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Social Buttons ────────────────────────────────────────
+                SocialLoginButton(
+                  label: AppStrings.continueWithGoogle,
+                  icon: const _GoogleIcon(),
+                  onPressed: _googleLogin,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+
+                // ── Sign Up Link ──────────────────────────────────────────
+                _SignUpFooter(onTap: _createAccount),
+                const SizedBox(height: AppSpacing.lg),
+              ],
             ),
           ),
         ),
