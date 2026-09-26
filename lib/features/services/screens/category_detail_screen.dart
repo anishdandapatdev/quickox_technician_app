@@ -1,243 +1,514 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/firebase_services_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import 'sub_services_screen.dart';
+import 'service_detail_overview_screen.dart';
 
-/// Screen displaying service categories in the exact horizontal card style
-/// with top back navigation and category subtitle.
-class CategoryDetailScreen extends StatelessWidget {
+/// Screen 2: Filtered Category Services Grid
+/// Exactly matches home_service_web/src/features/services/service_category_screen.jsx
+/// with search box, frequency pills (All / One-Time / Monthly), counter,
+/// and dynamic service cards loaded from Firebase Firestore backend.
+class CategoryDetailScreen extends StatefulWidget {
   const CategoryDetailScreen({
     super.key,
-    this.headerTitle = 'Doorstep Home Services & Repairs',
-    this.headerSubtitle =
-        'Select a category below to view services, inspect coverage, and book verified professionals instantly.',
+    this.categoryName = 'Doorstep Home Services & Repairs',
+    this.headerTitle,
+    this.headerSubtitle,
   });
 
-  final String headerTitle;
-  final String headerSubtitle;
+  final String categoryName;
+  final String? headerTitle;
+  final String? headerSubtitle;
 
-  static const List<_SubCategoryItem> _items = [
-    _SubCategoryItem(
-      title: 'Home Service',
-      description: 'AC, Electrical, Plumbing, RO & Appliance Repair',
-      imageUrl:
-          'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Live Now',
-      badgeType: _BadgeType.liveNow,
-      tags: ['AC Repair', 'Plumbing', 'RO Service'],
-      fallbackIcon: Icons.home_repair_service_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Food Delivery',
-      description: 'Tiffin, Home Cooked Meals, Restaurant Food',
-      imageUrl:
-          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Live Now',
-      badgeType: _BadgeType.liveNow,
-      tags: ['Home Food', 'Restaurants', 'Tiffin'],
-      fallbackIcon: Icons.restaurant_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Bike & Cab Service',
-      description: 'Bike repair, Car service, Cab booking',
-      imageUrl:
-          'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Live Now',
-      badgeType: _BadgeType.liveNow,
-      tags: ['Bike Service', 'Car Service', 'Cab Booking'],
-      fallbackIcon: Icons.directions_car_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Event Booking (Birthday, Marriage, Rice ceremony)',
-      description:
-          'Function, Decorations, Catering, Rental Materials, Event & Photography',
-      imageUrl:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Coming Soon',
-      badgeType: _BadgeType.comingSoon,
-      tags: ['Event Booking', 'Catering', 'Decoration'],
-      fallbackIcon: Icons.celebration_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Emergency Ambulance',
-      description: '24/7 Medical Support & ICU on Wheels',
-      imageUrl:
-          'https://images.unsplash.com/photo-1587745416684-47953f16f02f?auto=format&fit=crop&w=600&q=80',
-      badgeText: null,
-      badgeType: _BadgeType.none,
-      tags: ['24/7 Service', 'Trained Staff', 'Paramedic Care'],
-      fallbackIcon: Icons.medical_services_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Medicine Delivery',
-      description:
-          'Prescribed & Non-Prescribed Medicines, Health & Wellness Products',
-      imageUrl:
-          'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Live Now',
-      badgeType: _BadgeType.liveNow,
-      tags: ['Generic Medicines', 'Health Care', 'Fast Delivery'],
-      fallbackIcon: Icons.medication_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'Room Booking',
-      description: 'Hotels, PG, Guest House, Homestays',
-      imageUrl:
-          'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Coming Soon',
-      badgeType: _BadgeType.comingSoon,
-      tags: ['Hotels', 'PG', 'Guest House'],
-      fallbackIcon: Icons.hotel_rounded,
-    ),
-    _SubCategoryItem(
-      title: 'QUICKOX ELECTRA Scooty',
-      description: 'Electric Scooty Sales & Service',
-      imageUrl:
-          'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80',
-      badgeText: 'Coming Soon',
-      badgeType: _BadgeType.comingSoon,
-      tags: ['Sales', 'Service', 'Spare Parts'],
-      fallbackIcon: Icons.electric_moped_rounded,
-    ),
-  ];
+  @override
+  State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
+}
 
-  void _handleCardTap(BuildContext context, _SubCategoryItem item) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SubServicesScreen(
-          categoryTitle: item.title,
-          categorySubtitle: item.description,
-        ),
-      ),
-    );
+class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final FirebaseServicesService _servicesService = FirebaseServicesService();
+
+  String _searchQuery = '';
+  String _activeFrequency = 'All'; // 'All', 'One-Time', 'Monthly'
+  late List<ServiceItem> _services;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialList = FirebaseServicesService.defaultServices.where((s) {
+      final c = widget.categoryName.toLowerCase();
+      return s.category.toLowerCase().contains(c) ||
+          c.contains(s.category.toLowerCase()) ||
+          s.categoryId.toLowerCase().contains(c);
+    }).toList();
+    _services = initialList.isNotEmpty
+        ? initialList
+        : FirebaseServicesService.defaultServices;
+    _loadServices();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadServices() async {
+    try {
+      final list = await _servicesService.fetchServicesForCategory(
+        categoryName: widget.categoryName,
+        frequency: _activeFrequency,
+        query: _searchQuery,
+      );
+      if (mounted && list.isNotEmpty) {
+        setState(() {
+          _services = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _onFrequencyChanged(String freq) {
+    if (_activeFrequency == freq) return;
+    setState(() {
+      _activeFrequency = freq;
+    });
+    _loadServices();
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    _loadServices();
+  }
+
+  void _handleReset() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _activeFrequency = 'All';
+    });
+    _loadServices();
+  }
+
+  String _formatCategoryTitle() {
+    final cat = widget.headerTitle ?? widget.categoryName;
+    if (cat.toLowerCase().contains('service') ||
+        cat.toLowerCase().contains('repair')) {
+      return cat;
+    }
+    return '$cat Services';
   }
 
   @override
   Widget build(BuildContext context) {
+    final title = _formatCategoryTitle();
+    final subtitle = widget.headerSubtitle ??
+        'Select a service below to view coverage, price specs, and book verified professionals.';
+
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top Bar with Back Button & Centered Title ───────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.xs,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgSecondary,
-                        border: Border.all(color: AppColors.border),
-                        shape: BoxShape.circle,
+        child: RefreshIndicator(
+          onRefresh: _loadServices,
+          color: AppColors.primary,
+          child: Column(
+            children: [
+              // ── Top Navigation Bar ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.bgSecondary,
+                          border: Border.all(color: AppColors.border),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                        color: AppColors.textPrimary,
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4, right: 28),
+                        child: Column(
+                          children: [
+                            Text(
+                              title,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.h3.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodySm.copyWith(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4, right: 28),
+                  ],
+                ),
+              ),
+              const Divider(color: AppColors.border, height: 1),
+
+              // ── Scrollable Body ─────────────────────────────────────────────
+              Expanded(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [
+                    // ── Search & Filter Panel (matching service_category_screen.jsx)
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgPrimary,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x05000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Search Box Row with Reset Button
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    onChanged: _onSearchChanged,
+                                    style: AppTextStyles.bodyMd.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 13,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Search services by name...',
+                                      hintStyle: AppTextStyles.bodySm.copyWith(
+                                        color: AppColors.textMuted,
+                                        fontSize: 12,
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.search_rounded,
+                                        color: AppColors.textMuted,
+                                        size: 20,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              OutlinedButton.icon(
+                                onPressed: _handleReset,
+                                icon: const Icon(Icons.refresh_rounded, size: 14),
+                                label: const Text('Reset',
+                                    style: TextStyle(fontSize: 12)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.textSecondary,
+                                  side: const BorderSide(
+                                      color: AppColors.border),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+
+                          // Frequency Filter Segment
                           Text(
-                            headerTitle,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.h3.copyWith(
-                              fontSize: 18,
+                            'SERVICE TYPE / PLAN',
+                            style: AppTextStyles.labelSm.copyWith(
+                              fontSize: 10,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: AppColors.textMuted,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            headerSubtitle,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.bodySm.copyWith(
-                              fontSize: 11.5,
-                              color: AppColors.textSecondary,
-                              height: 1.35,
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                                width: 0.8,
+                              ),
                             ),
+                            child: Row(
+                              children: [
+                                _buildFrequencyTab(
+                                  id: 'All',
+                                  label: 'All Services',
+                                  icon: Icons.auto_awesome_rounded,
+                                ),
+                                _buildFrequencyTab(
+                                  id: 'One-Time',
+                                  label: 'One-Time',
+                                  icon: Icons.access_time_rounded,
+                                ),
+                                _buildFrequencyTab(
+                                  id: 'Monthly',
+                                  label: 'Monthly Sub',
+                                  icon: Icons.sell_outlined,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+
+                          // Counter & Category Info Row
+                          const Divider(color: Color(0xFFF1F5F9), height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Showing: ${widget.categoryName} • $_activeFrequency',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.bodySm.copyWith(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${_services.length} services found',
+                                style: AppTextStyles.bodySm.copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const Divider(color: AppColors.border, height: 1),
+                    const SizedBox(height: AppSpacing.lg),
 
-            // ── List of Same-Style Horizontal Cards ─────────────────────────
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                itemCount: _items.length,
-                separatorBuilder: (_, i) => const SizedBox(height: AppSpacing.md),
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return GestureDetector(
-                    onTap: () => _handleCardTap(context, item),
-                    child: _DetailHorizontalCard(item: item),
-                  );
-                },
+                    // ── Services Cards List ───────────────────────────────────
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+                    else if (_services.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 36, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: AppColors.bgPrimary,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: AppColors.textMuted,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No Services Found for ${widget.categoryName}',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.labelMd.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Try changing your search query or switching to All Services tab.',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.bodySm.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            TextButton(
+                              onPressed: _handleReset,
+                              child: const Text('View All Services'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _services.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, index) {
+                          final svc = _services[index];
+                          return _ServiceGridCard(
+                            service: svc,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ServiceDetailOverviewScreen(
+                                    service: svc,
+                                    serviceTitle: svc.title,
+                                    serviceSubtitle: svc.desc,
+                                    parentCategory: widget.categoryName,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    const SizedBox(height: AppSpacing.xl),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFrequencyTab({
+    required String id,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _activeFrequency == id;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onFrequencyChanged(id),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            boxShadow: isSelected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x0D000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Private Helper Widgets ────────────────────────────────────────────────────
+// ── Private Service Grid Card (matching service_category_screen.jsx) ─────────
 
-enum _BadgeType { none, liveNow, comingSoon }
-
-class _SubCategoryItem {
-  const _SubCategoryItem({
-    required this.title,
-    required this.description,
-    required this.imageUrl,
-    required this.badgeText,
-    required this.badgeType,
-    required this.tags,
-    required this.fallbackIcon,
+class _ServiceGridCard extends StatelessWidget {
+  const _ServiceGridCard({
+    required this.service,
+    required this.onTap,
   });
 
-  final String title;
-  final String description;
-  final String imageUrl;
-  final String? badgeText;
-  final _BadgeType badgeType;
-  final List<String> tags;
-  final IconData fallbackIcon;
-}
-
-class _DetailHorizontalCard extends StatelessWidget {
-  const _DetailHorizontalCard({required this.item});
-
-  final _SubCategoryItem item;
+  final ServiceItem service;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 106,
       decoration: BoxDecoration(
         color: AppColors.bgPrimary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -245,201 +516,274 @@ class _DetailHorizontalCard extends StatelessWidget {
         boxShadow: const [
           BoxShadow(
             color: Color(0x06000000),
-            blurRadius: 8,
+            blurRadius: 10,
             offset: Offset(0, 2),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Left: Image with Badge Overlay ────────────────────────────────
+          // ── Top Image with Rating Badge ─────────────────────────────────────
           SizedBox(
-            width: 128,
-            height: double.infinity,
+            height: 140,
+            width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  item.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, e, s) => Container(
-                    color: AppColors.bgTertiary,
-                    child: Center(
-                      child: Icon(
-                        item.fallbackIcon,
-                        color: AppColors.textMuted,
-                        size: 36,
-                      ),
-                    ),
+                if (service.imageUrl.startsWith('http'))
+                  Image.network(
+                    service.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildImageFallback(),
+                  )
+                else
+                  Image.asset(
+                    service.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildImageFallback(),
                   ),
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: AppColors.bgTertiary,
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(AppColors.primary),
+
+                // Top-right Rating Pill
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1F000000),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 13,
+                          color: Color(0xFFFBBF24),
+                        ),
+                        const SizedBox(width: 2.5),
+                        Text(
+                          service.rating,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      ],
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
 
-                // Badge (Live Now / Coming Soon)
-                if (item.badgeText != null)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
+          // ── Card Details Body ───────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  service.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelLg.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
+                    color: AppColors.textPrimary,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Badges row: Verified + Frequency
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    // Verified Badge
+                    Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: item.badgeType == _BadgeType.liveNow
-                            ? const Color(0xFFDCFCE7)
-                            : const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                        border: Border.all(
-                          color: item.badgeType == _BadgeType.liveNow
-                              ? const Color(0xFF86EFAC)
-                              : const Color(0xFFFDE68A),
-                          width: 0.8,
-                        ),
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (item.badgeType == _BadgeType.liveNow)
-                            Container(
-                              width: 5.5,
-                              height: 5.5,
-                              margin: const EdgeInsets.only(right: 3.5),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF16A34A),
-                                shape: BoxShape.circle,
-                              ),
-                            )
-                          else
-                            const Padding(
-                              padding: EdgeInsets.only(right: 3.5),
-                              child: Icon(
-                                Icons.access_time_rounded,
-                                size: 9.5,
-                                color: Color(0xFFD97706),
-                              ),
-                            ),
+                          Icon(Icons.check_rounded,
+                              size: 11, color: Color(0xFF059669)),
+                          SizedBox(width: 3),
                           Text(
-                            item.badgeText!,
+                            'Verified',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.w700,
-                              color: item.badgeType == _BadgeType.liveNow
-                                  ? const Color(0xFF15803D)
-                                  : const Color(0xFFB45309),
+                              color: Color(0xFF059669),
                             ),
                           ),
                         ],
                       ),
                     ),
+
+                    // Frequency Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: service.frequency.toLowerCase().contains('month')
+                            ? const Color(0xFFEFF6FF)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            service.frequency.toLowerCase().contains('month')
+                                ? Icons.sell_outlined
+                                : Icons.access_time_rounded,
+                            size: 10,
+                            color: service.frequency
+                                    .toLowerCase()
+                                    .contains('month')
+                                ? const Color(0xFF2563EB)
+                                : const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            service.frequency.toLowerCase().contains('month')
+                                ? 'Monthly Sub'
+                                : 'One-Time',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: service.frequency
+                                      .toLowerCase()
+                                      .contains('month')
+                                  ? const Color(0xFF2563EB)
+                                  : const Color(0xFF475569),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Description
+                Text(
+                  service.desc,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySm.copyWith(
+                    fontSize: 11.5,
+                    height: 1.35,
+                    color: AppColors.textSecondary,
                   ),
+                ),
+                const SizedBox(height: 12),
+
+                // Price and View Service CTA Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Starting at',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodySm.copyWith(
+                              fontSize: 10,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          Text(
+                            service.price,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: onTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'View Service',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(width: 3),
+                          Icon(Icons.arrow_forward_rounded, size: 13),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-
-          // ── Right: Content & Arrow ────────────────────────────────────────
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Title + Subtitle and Circular Chevron
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.labelMd.copyWith(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13.5,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.bodySm.copyWith(
-                                fontSize: 10.5,
-                                height: 1.25,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEFF6FF),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Pill Tags Row
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 2,
-                    children: item.tags.map((tag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Text(
-                          tag,
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImageFallback() {
+    return Container(
+      color: const Color(0xFF0F172A),
+      child: Center(
+        child: Text(
+          service.title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
+        ),
       ),
     );
   }

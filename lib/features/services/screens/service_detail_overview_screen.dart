@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/firebase_services_service.dart';
 import '../../../core/theme/app_colors.dart';
 import 'book_technician_screen.dart';
 import 'shop_parts_screen.dart';
@@ -7,16 +8,18 @@ import 'shop_parts_screen.dart';
 /// Screen displaying the complete Service Overview & Landing details
 /// matching the user mockup with hero illustration, stats, "Choose What You Need",
 /// trust badges, "What's Included", "How It Works", FAQs, Related Services, and
-/// sticky immediate emergency help bottom bar.
+/// sticky immediate emergency help bottom bar. Connected to Firebase Firestore.
 class ServiceDetailOverviewScreen extends StatefulWidget {
   const ServiceDetailOverviewScreen({
     super.key,
+    this.service,
     this.serviceTitle = 'Refrigerator Repair, Installation Solutions',
     this.serviceSubtitle =
         'Diagnose and fix common refrigerator problems, repair refrigerator along with installation service.',
     this.parentCategory = 'Home Service',
   });
 
+  final ServiceItem? service;
   final String serviceTitle;
   final String serviceSubtitle;
   final String parentCategory;
@@ -28,36 +31,48 @@ class ServiceDetailOverviewScreen extends StatefulWidget {
 
 class _ServiceDetailOverviewScreenState
     extends State<ServiceDetailOverviewScreen> {
+  final FirebaseServicesService _servicesService = FirebaseServicesService();
+  ServiceDetailModel? _detailModel;
+  bool _isLoading = true;
+
+  String get _effectiveTitle =>
+      widget.service?.title ?? widget.serviceTitle;
+  String get _effectiveSubtitle =>
+      widget.service?.desc ?? widget.serviceSubtitle;
+  String get _effectiveCategory =>
+      widget.service?.category ?? widget.parentCategory;
+  String get _effectivePrice =>
+      widget.service?.price ?? '₹ 249/-';
+
   // Accordion open/close state for FAQs
   final Set<int> _expandedFaqIndices = {};
 
-  final List<Map<String, String>> _faqs = [
-    {
-      'question': 'Is inspection really free?',
-      'answer':
-          'Yes! Initial home inspection is completely free when you proceed with the repair service.',
-    },
-    {
-      'question': 'What if extra material is required?',
-      'answer':
-          'Our technician will provide an upfront rate card before replacing any parts. You only pay for genuine parts used.',
-    },
-    {
-      'question': 'Do you provide a warranty?',
-      'answer':
-          'Yes! Every service comes with a 30-day service warranty. Any recurring issues are fixed completely free.',
-    },
-    {
-      'question': 'How soon can an electrician arrive?',
-      'answer':
-          'Our verified technicians typically arrive at your doorstep within 30 to 60 minutes of booking confirmation.',
-    },
-    {
-      'question': 'Are your electricians verified?',
-      'answer':
-          'All Quickox service professionals are 100% background verified, police checked, and certified experts.',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadServiceDetail();
+  }
+
+  Future<void> _loadServiceDetail() async {
+    setState(() => _isLoading = true);
+    try {
+      final model = await _servicesService.fetchServiceDetail(
+        _effectiveTitle,
+        category: _effectiveCategory,
+        serviceId: widget.service?.id,
+      );
+      if (mounted) {
+        setState(() {
+          _detailModel = model;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   final List<Map<String, dynamic>> _relatedServices = [
     {
@@ -87,8 +102,8 @@ class _ServiceDetailOverviewScreenState
       context,
       MaterialPageRoute(
         builder: (_) => BookTechnicianScreen(
-          serviceTitle: widget.serviceTitle,
-          parentCategory: widget.parentCategory,
+          serviceTitle: _effectiveTitle,
+          parentCategory: _effectiveCategory,
         ),
       ),
     );
@@ -108,16 +123,20 @@ class _ServiceDetailOverviewScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── Scrollable Body ─────────────────────────────────────────────
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Top Navigation & Hero Section ─────────────────────────
-                    _buildHeroSection(context),
+        child: RefreshIndicator(
+          onRefresh: _loadServiceDetail,
+          color: AppColors.primary,
+          child: Column(
+            children: [
+              // ── Scrollable Body ─────────────────────────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Top Navigation & Hero Section ─────────────────────────
+                      _buildHeroSection(context),
 
                     const SizedBox(height: 12),
 
@@ -178,6 +197,7 @@ class _ServiceDetailOverviewScreenState
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -224,19 +244,55 @@ class _ServiceDetailOverviewScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Category Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.flash_on_rounded, size: 12, color: Color(0xFF2563EB)),
+                          const SizedBox(width: 3),
+                          Text(
+                            _effectiveCategory,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                          if (_isLoading) ...[
+                            const SizedBox(width: 4),
+                            const SizedBox(
+                              width: 8,
+                              height: 8,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Text(
-                      widget.serviceTitle,
+                      _detailModel?.heroTitle ?? _effectiveTitle,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0F172A),
                         height: 1.2,
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      widget.serviceSubtitle,
+                      _detailModel?.heroDesc ?? _effectiveSubtitle,
                       style: const TextStyle(
                         fontSize: 11.5,
                         color: Color(0xFF64748B),
@@ -252,35 +308,35 @@ class _ServiceDetailOverviewScreenState
                       children: const [
                         _ValueBadge(
                           icon: Icons.verified_user_rounded,
-                          label: 'Verified Professionals',
+                          label: 'Verified Pros',
                           bgColor: Color(0xFFDCFCE7),
                           borderColor: Color(0xFF86EFAC),
                           textColor: Color(0xFF15803D),
                         ),
                         _ValueBadge(
                           icon: Icons.access_time_rounded,
-                          label: 'On-time Service',
+                          label: 'On-Time',
                           bgColor: Color(0xFFEFF6FF),
                           borderColor: Color(0xFFBFDBFE),
                           textColor: Color(0xFF1D4ED8),
                         ),
                         _ValueBadge(
                           icon: Icons.sell_rounded,
-                          label: 'Transparent Pricing',
+                          label: 'Fair Pricing',
                           bgColor: Color(0xFFFEF3C7),
                           borderColor: Color(0xFFFDE68A),
                           textColor: Color(0xFFB45309),
                         ),
                         _ValueBadge(
                           icon: Icons.shield_rounded,
-                          label: 'Service Warranty',
+                          label: 'Warranty',
                           bgColor: Color(0xFFF3E8FF),
                           borderColor: Color(0xFFDDD6FE),
                           textColor: Color(0xFF7E22CE),
                         ),
                         _ValueBadge(
                           icon: Icons.headset_mic_rounded,
-                          label: '24/7 Support',
+                          label: '24/7 Help',
                           bgColor: Color(0xFFFCE7F3),
                           borderColor: Color(0xFFFBCFE8),
                           textColor: Color(0xFFBE185D),
@@ -360,8 +416,8 @@ class _ServiceDetailOverviewScreenState
         ],
       ),
       child: Row(
-        children: const [
-          Expanded(
+        children: [
+          const Expanded(
             child: _StatColumn(
               icon: Icons.access_time_rounded,
               iconColor: Color(0xFF2563EB),
@@ -369,8 +425,8 @@ class _ServiceDetailOverviewScreenState
               value: '30 - 60 mins',
             ),
           ),
-          _VerticalDivider(),
-          Expanded(
+          const _VerticalDivider(),
+          const Expanded(
             child: _StatColumn(
               icon: Icons.star_rounded,
               iconColor: Color(0xFFF59E0B),
@@ -378,8 +434,8 @@ class _ServiceDetailOverviewScreenState
               value: '4.8 (12k+)',
             ),
           ),
-          _VerticalDivider(),
-          Expanded(
+          const _VerticalDivider(),
+          const Expanded(
             child: _StatColumn(
               icon: Icons.calendar_today_rounded,
               iconColor: Color(0xFF2563EB),
@@ -387,13 +443,13 @@ class _ServiceDetailOverviewScreenState
               value: 'All Days',
             ),
           ),
-          _VerticalDivider(),
+          const _VerticalDivider(),
           Expanded(
             child: _StatColumn(
-              icon: Icons.shield_outlined,
-              iconColor: Color(0xFF2563EB),
-              label: 'Warranty',
-              value: 'Upto 30 Days',
+              icon: Icons.sell_outlined,
+              iconColor: const Color(0xFF2563EB),
+              label: 'Starts From',
+              value: _effectivePrice,
             ),
           ),
         ],
@@ -513,17 +569,32 @@ class _ServiceDetailOverviewScreenState
                               onPressed: () => _openBookingFlow(context),
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'Book Now',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
+                                  Flexible(
+                                    child: Text(
+                                      'Book Now',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                   SizedBox(width: 4),
                                   Icon(Icons.arrow_forward_rounded, size: 14),
                                 ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Center(
+                            child: Text(
+                              'Starts at $_effectivePrice',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -644,12 +715,16 @@ class _ServiceDetailOverviewScreenState
                         onPressed: () => _openSparePartsSheet(context),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Shop Parts',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                            Flexible(
+                              child: Text(
+                                'Shop Parts',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             SizedBox(width: 4),
@@ -747,38 +822,37 @@ class _ServiceDetailOverviewScreenState
   // ── 5. What's Included Section ──────────────────────────────────────────────
 
   Widget _buildWhatsIncludedSection() {
-    final List<Map<String, dynamic>> items = [
-      {
-        'title': 'Wiring & Electrical',
-        'desc': 'Check and repair wiring faults',
-        'icon': Icons.bolt_rounded,
-      },
-      {
-        'title': 'Switch & Socket Installation',
-        'desc': 'Install and replace switches',
-        'icon': Icons.power_rounded,
-      },
-      {
-        'title': 'MCB & Fuse Installation',
-        'desc': 'MCB, RCCB and fuse setup',
-        'icon': Icons.settings_rounded,
-      },
-      {
-        'title': 'Lighting Solutions',
-        'desc': 'LED lights, chandeliers, etc.',
-        'icon': Icons.lightbulb_outline_rounded,
-      },
-      {
-        'title': 'Fault Repair',
-        'desc': 'Fix power failure & short circuits',
-        'icon': Icons.build_rounded,
-      },
-      {
-        'title': 'Safety Check',
-        'desc': 'Complete electrical safety check',
-        'icon': Icons.shield_outlined,
-      },
-    ];
+    final dynamicInclusions = _detailModel?.inclusions;
+    final List<Map<String, dynamic>> items = (dynamicInclusions != null && dynamicInclusions.isNotEmpty)
+        ? dynamicInclusions
+            .map((inc) => {
+                  'title': inc.title,
+                  'desc': inc.desc,
+                  'icon': inc.icon,
+                })
+            .toList()
+        : [
+            {
+              'title': 'Inspection & Diagnosis',
+              'desc': 'Comprehensive checkup & quote',
+              'icon': Icons.search_rounded,
+            },
+            {
+              'title': 'Precision Repair',
+              'desc': 'Genuine parts & expert repair',
+              'icon': Icons.build_rounded,
+            },
+            {
+              'title': 'Safety & Load Audit',
+              'desc': 'Safety test & load evaluation',
+              'icon': Icons.shield_outlined,
+            },
+            {
+              'title': 'Workspace Handover',
+              'desc': 'Sanitization & 30-day warranty',
+              'icon': Icons.verified_user_rounded,
+            },
+          ];
 
     return Column(
       children: [
@@ -1012,6 +1086,36 @@ class _ServiceDetailOverviewScreenState
   }
 
   Widget _buildFaqsColumn() {
+    final faqsList = (_detailModel?.faqs != null && _detailModel!.faqs.isNotEmpty)
+        ? _detailModel!.faqs
+        : const [
+            ServiceFaq(
+              question: 'Is inspection really free?',
+              answer:
+                  'Yes! Initial home inspection is completely free when you proceed with the repair service.',
+            ),
+            ServiceFaq(
+              question: 'What if extra material is required?',
+              answer:
+                  'Our technician will provide an upfront rate card before replacing any parts. You only pay for genuine parts used.',
+            ),
+            ServiceFaq(
+              question: 'Do you provide a warranty?',
+              answer:
+                  'Yes! Every service comes with a 30-day service warranty. Any recurring issues are fixed completely free.',
+            ),
+            ServiceFaq(
+              question: 'How soon can an electrician arrive?',
+              answer:
+                  'Our verified technicians typically arrive at your doorstep within 30 to 60 minutes of booking confirmation.',
+            ),
+            ServiceFaq(
+              question: 'Are your electricians verified?',
+              answer:
+                  'All Quickox service professionals are 100% background verified, police checked, and certified experts.',
+            ),
+          ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1053,10 +1157,10 @@ class _ServiceDetailOverviewScreenState
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Column(
-            children: List.generate(_faqs.length, (i) {
-              final faq = _faqs[i];
+            children: List.generate(faqsList.length, (i) {
+              final faq = faqsList[i];
               final isExpanded = _expandedFaqIndices.contains(i);
-              final isLast = i == _faqs.length - 1;
+              final isLast = i == faqsList.length - 1;
 
               return Column(
                 children: [
@@ -1079,7 +1183,7 @@ class _ServiceDetailOverviewScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              faq['question']!,
+                              faq.question,
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
@@ -1103,7 +1207,7 @@ class _ServiceDetailOverviewScreenState
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                       child: Text(
-                        faq['answer']!,
+                        faq.answer,
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF64748B),
@@ -1129,14 +1233,19 @@ class _ServiceDetailOverviewScreenState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Related Services',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+            const Expanded(
+              child: Text(
+                'Related Services',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             TextButton(
               onPressed: () {},
               style: TextButton.styleFrom(
@@ -1225,7 +1334,7 @@ class _ServiceDetailOverviewScreenState
 
   Widget _buildStickyHelpBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF1F2),
         border: const Border(
@@ -1239,107 +1348,111 @@ class _ServiceDetailOverviewScreenState
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Red Headset Icon
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFEE2E2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.headset_mic_rounded,
-              color: Color(0xFFDC2626),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Text
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Need Immediate Help?',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFDC2626),
-                  ),
-                ),
-                SizedBox(height: 1),
-                Text(
-                  "Facing an emergency? We're just a call or chat away.",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Call Now Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Red Headset Icon
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
               ),
-              elevation: 0,
-              minimumSize: const Size(0, 34),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Connecting to 24/7 Quickox Emergency Helpline...'),
-                  backgroundColor: Color(0xFFDC2626),
-                ),
-              );
-            },
-            icon: const Icon(Icons.call_rounded, size: 14),
-            label: const Text(
-              'Call Now',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 6),
-
-          // WhatsApp Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF16A34A),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              child: const Icon(
+                Icons.headset_mic_rounded,
+                color: Color(0xFFDC2626),
+                size: 18,
               ),
-              elevation: 0,
-              minimumSize: const Size(0, 34),
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Opening Quickox WhatsApp Support Desk...'),
-                  backgroundColor: Color(0xFF16A34A),
+            const SizedBox(width: 8),
+
+            // Text
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Need Help?',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                  Text(
+                    '24/7 emergency support',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+
+            // Call Now Button
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_rounded, size: 13),
-            label: const Text(
-              'WhatsApp',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                elevation: 0,
+                minimumSize: const Size(0, 32),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Connecting to 24/7 Quickox Emergency Helpline...'),
+                    backgroundColor: Color(0xFFDC2626),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.call_rounded, size: 13),
+              label: const Text(
+                'Call',
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 5),
+
+            // WhatsApp Button
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+                minimumSize: const Size(0, 32),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Opening Quickox WhatsApp Support Desk...'),
+                    backgroundColor: Color(0xFF16A34A),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.chat_bubble_rounded, size: 12),
+              label: const Text(
+                'Chat',
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1376,12 +1489,16 @@ class _ValueBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 11, color: textColor),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: textColor,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
             ),
           ),
         ],

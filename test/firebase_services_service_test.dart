@@ -98,5 +98,52 @@ void main() {
       expect(verticals.any((v) => v.id == 'medicine_delivery'), isTrue);
       expect(verticals.any((v) => v.id == 'food_delivery'), isTrue);
     });
+
+    test('fetchCategories returns categories with fallback or Firestore integration', () async {
+      final service = FirebaseServicesService();
+      final categories = await service.fetchCategories();
+      expect(categories.isNotEmpty, isTrue);
+      final titles = categories.map((c) => c.title.toLowerCase()).toList();
+      expect(titles.any((t) => t.contains('ac')), isTrue);
+      expect(titles.any((t) => t.contains('electrical')), isTrue);
+      expect(titles.any((t) => t.contains('plumbing')), isTrue);
+    });
+
+    test('fetchServicesForCategory filters by category, frequency and query', () async {
+      final service = FirebaseServicesService();
+
+      // Non-home category
+      final foodServices = await service.fetchServicesForCategory(categoryName: 'Food Delivery');
+      expect(foodServices.isNotEmpty, isTrue);
+      expect(foodServices.any((s) => s.title.contains('Tiffin')), isTrue);
+
+      // Home category with frequency filter
+      final oneTimeAc = await service.fetchServicesForCategory(
+        categoryName: 'AC',
+        frequency: 'One-Time',
+      );
+      expect(oneTimeAc.isNotEmpty, isTrue);
+      for (final s in oneTimeAc) {
+        expect(s.frequency.toLowerCase(), 'one-time');
+      }
+
+      // Query filter
+      final searchFiltered = await service.fetchServicesForCategory(
+        categoryName: 'All',
+        query: 'Switchboard',
+      );
+      expect(searchFiltered.isNotEmpty, isTrue);
+      expect(searchFiltered.first.title.toLowerCase().contains('switchboard'), isTrue);
+    });
+
+    test('fetchServiceDetail returns rich model with inclusions, FAQs and steps', () async {
+      final service = FirebaseServicesService();
+      final detail = await service.fetchServiceDetail('AC Deep Cleaning');
+      expect(detail.heroTitle.isNotEmpty, isTrue);
+      expect(detail.heroDesc.isNotEmpty, isTrue);
+      expect(detail.inclusions.isNotEmpty, isTrue);
+      expect(detail.faqs.isNotEmpty, isTrue);
+      expect(detail.howItWorks.isNotEmpty, isTrue);
+    });
   });
 }
