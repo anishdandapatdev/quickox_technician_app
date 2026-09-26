@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/firebase_membership_service.dart';
 import '../../bookings/screens/bookings_screen.dart';
 
 /// Data model representing a BHK-tailored membership plan tier
@@ -94,6 +95,8 @@ class MembershipScreen extends StatefulWidget {
 }
 
 class _MembershipScreenState extends State<MembershipScreen> {
+  final FirebaseMembershipService _firebaseService = FirebaseMembershipService();
+
   // Selected duration: 1, 3, 6, or 12 months (matching web multiplier)
   int _selectedMonths = 12;
 
@@ -103,24 +106,38 @@ class _MembershipScreenState extends State<MembershipScreen> {
   // Active membership state (mock data for demo)
   final bool _hasActiveSubscription = true;
 
-  // Available coupons matching web coupons manager
-  static const List<MembershipCoupon> _availableCoupons = [
-    MembershipCoupon(
-      code: 'QUICKOX20',
-      discountPercentage: 20,
-      description: '20% OFF on all 3+ months care plans',
-    ),
-    MembershipCoupon(
-      code: 'WELCOME50',
-      discountPercentage: 50,
-      description: '50% OFF first month subscription',
-    ),
-    MembershipCoupon(
-      code: 'SUPERCARE',
-      discountPercentage: 25,
-      description: '25% OFF on 2 BHK & 3 BHK plans',
-    ),
-  ];
+  // Dynamic live data from Firebase with fallback
+  List<MembershipPlanItem> _plans = FirebaseMembershipService.defaultPlans;
+  List<MembershipCoupon> _availableCoupons = FirebaseMembershipService.defaultCoupons;
+  bool _isLoadingFirebase = false;
+  bool _isLiveSynced = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirebaseData();
+  }
+
+  /// Realtime fetch from Firestore `membership_config/prices` & `coupons`
+  Future<void> _loadFirebaseData() async {
+    setState(() => _isLoadingFirebase = true);
+    try {
+      final remotePlans = await _firebaseService.fetchPlans();
+      final remoteCoupons = await _firebaseService.fetchCoupons();
+      if (mounted) {
+        setState(() {
+          _plans = remotePlans;
+          _availableCoupons = remoteCoupons;
+          _isLiveSynced = true;
+          _isLoadingFirebase = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingFirebase = false);
+      }
+    }
+  }
 
   // 11 BHK-based membership tiers matching web PLAN_KEYS matrix
   static const List<MembershipPlanItem> _allPlans = [
@@ -349,10 +366,11 @@ class _MembershipScreenState extends State<MembershipScreen> {
   ];
 
   List<MembershipPlanItem> get _filteredPlans {
+    final source = _plans.isNotEmpty ? _plans : _allPlans;
     if (_selectedBhkFilter == 'All') {
-      return _allPlans;
+      return source;
     }
-    return _allPlans.where((p) => p.bhk == _selectedBhkFilter).toList();
+    return source.where((p) => p.bhk == _selectedBhkFilter).toList();
   }
 
   // ── Checkout & Subscription Bottom Sheet Flow ─────────────────────────────
@@ -367,6 +385,15 @@ class _MembershipScreenState extends State<MembershipScreen> {
         availableCoupons: _availableCoupons,
         onSubscribed: (planName, durationMonths, totalPaid, code) {
           Navigator.pop(ctx);
+          // Persist subscription asynchronously to Firebase Firestore `subscriptions`
+          _firebaseService.createSubscription(
+            planId: plan.id,
+            planName: planName,
+            bhk: plan.bhk,
+            durationMonths: durationMonths,
+            totalPaid: totalPaid,
+            couponCode: code,
+          );
           _showSuccessConfirmation(planName, durationMonths, totalPaid, code);
         },
       ),
@@ -666,6 +693,23 @@ class _MembershipScreenState extends State<MembershipScreen> {
         ),
         actions: [
           IconButton(
+            icon: _isLoadingFirebase
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : const Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.primary,
+                  ),
+            tooltip: 'Sync with Firebase',
+            onPressed: _isLoadingFirebase ? null : _loadFirebaseData,
+          ),
+          IconButton(
             icon: const Icon(
               Icons.local_offer_outlined,
               color: AppColors.primary,
@@ -683,6 +727,48 @@ class _MembershipScreenState extends State<MembershipScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Firebase Live Sync Status Badge ──────────────────────────────
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: _isLiveSynced ? const Color(0xFFF0FDF4) : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                border: Border.all(
+                  color: _isLiveSynced ? const Color(0xFFBBF7D0) : const Color(0xFFBFDBFE),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: _isLiveSynced ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      _isLiveSynced
+                          ? 'Firebase Live Synced (home-service-haldia)'
+                          : (_isLoadingFirebase
+                              ? 'Connecting to Firebase...'
+                              : 'Quickox Care Club (Offline Ready)'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _isLiveSynced ? const Color(0xFF15803D) : const Color(0xFF1E40AF),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // ── Active Subscription Status Card (Hero Banner) ─────────────────
             if (_hasActiveSubscription) ...[
               _buildActiveMembershipHero(),
@@ -775,10 +861,10 @@ class _MembershipScreenState extends State<MembershipScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                  color: const Color(0x3310B981),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   border: Border.all(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                    color: const Color(0x8010B981),
                   ),
                 ),
                 child: const Row(
@@ -920,7 +1006,11 @@ class _MembershipScreenState extends State<MembershipScreen> {
                   ),
                 ),
                 onPressed: () {
-                  _openCheckoutSheet(_allPlans.firstWhere((p) => p.id == 'p899'));
+                  final list = _plans.isNotEmpty ? _plans : _allPlans;
+                  _openCheckoutSheet(list.firstWhere(
+                    (p) => p.id == 'p899',
+                    orElse: () => list.first,
+                  ));
                 },
                 child: const Text(
                   'Extend',
