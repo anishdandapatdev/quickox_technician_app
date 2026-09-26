@@ -1,16 +1,68 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/firebase_services_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-/// Customer Home Screen
-class HomeScreen extends StatelessWidget {
+/// Customer Home Screen featuring:
+/// - Horizontal auto-scrolling promotional Image Carousel (replaces search bar)
+/// - Service Categories Grid
+/// - Quickox Care Club VIP Membership Banner
+/// - Dynamic Real-time Services (3 or 4 services loaded from Firebase Firestore with fallback)
+/// - "View All" button linking directly to the Services Screen (tab 1)
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.onNavigateTab,
+    this.servicesService,
+    this.autoPlaySlider = true,
   });
 
   final ValueChanged<int> onNavigateTab;
+  final FirebaseServicesService? servicesService;
+  final bool autoPlaySlider;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final FirebaseServicesService _servicesService;
+  List<ServiceItem> _services = [];
+  bool _isLoadingServices = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _servicesService = widget.servicesService ?? FirebaseServicesService();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    if (!mounted) return;
+    setState(() => _isLoadingServices = true);
+
+    try {
+      // Fetch 4 dynamic services from Firestore 'services' collection (or fallback)
+      final items = await _servicesService.fetchServices(limit: 4);
+      if (mounted) {
+        setState(() {
+          _services = items;
+          _isLoadingServices = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _services = FirebaseServicesService.defaultServices.take(4).toList();
+          _isLoadingServices = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,272 +127,941 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Search Bar ──────────────────────────────────────────────────
-            Container(
-              color: AppColors.bgPrimary,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                AppSpacing.md,
+      body: RefreshIndicator(
+        onRefresh: _loadServices,
+        color: AppColors.primary,
+        backgroundColor: AppColors.bgPrimary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.sm),
+
+              // ── Horizontal Image Carousel (Replaces Search Bar) ─────────────
+              _HomeImageSlider(
+                onNavigateTab: widget.onNavigateTab,
+                autoPlay: widget.autoPlaySlider,
               ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSecondary,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.border),
-                ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              // ── Service Categories ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textMuted,
-                      size: 22,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
+                      child: Text('Our Services', style: AppTextStyles.h3),
+                    ),
+                    GestureDetector(
+                      onTap: () => widget.onNavigateTab(1), // go to services
                       child: Text(
-                        'Search electrical, AC, plumbing...',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodyMd.copyWith(
-                          color: AppColors.textMuted,
+                        'View All',
+                        style: AppTextStyles.labelMd.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: AppSpacing.md),
 
-            // ── Membership Promo Banner ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  mainAxisSpacing: AppSpacing.md,
+                  crossAxisSpacing: AppSpacing.md,
+                  childAspectRatio: 0.95,
+                  children: [
+                    _CategoryItem(
+                      icon: Icons.ac_unit_rounded,
+                      title: 'AC Service',
+                      color: const Color(0xFF0284C7),
+                      onTap: () => widget.onNavigateTab(1),
+                    ),
+                    _CategoryItem(
+                      icon: Icons.bolt_rounded,
+                      title: 'Electrician',
+                      color: const Color(0xFFEAB308),
+                      onTap: () => widget.onNavigateTab(1),
+                    ),
+                    _CategoryItem(
+                      icon: Icons.water_drop_rounded,
+                      title: 'Plumber',
+                      color: const Color(0xFF2563EB),
+                      onTap: () => widget.onNavigateTab(1),
+                    ),
+                    _CategoryItem(
+                      icon: Icons.home_repair_service_rounded,
+                      title: 'Appliances',
+                      color: const Color(0xFFE87722),
+                      onTap: () => widget.onNavigateTab(1),
+                    ),
+                    _CategoryItem(
+                      icon: Icons.cleaning_services_rounded,
+                      title: 'Cleaning',
+                      color: const Color(0xFF0D9488),
+                      onTap: () => widget.onNavigateTab(1),
+                    ),
+                    _CategoryItem(
+                      icon: Icons.format_paint_rounded,
+                      title: 'Painting',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => widget.onNavigateTab(1),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Membership Promo Banner ─────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
+                              ),
+                              child: const Text(
+                                'QUICKOX CARE CLUB',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Save up to 25% on every booking with membership',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onTap: () =>
+                                  widget.onNavigateTab(2), // go to membership
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.full),
+                                ),
+                                child: const Text(
+                                  'Explore Plans →',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_user_rounded,
+                          size: 34,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              // ── Dynamic Services (Real Data from Firestore) ─────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.full),
-                            ),
-                            child: const Text(
-                              'QUICKOX CARE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Save 25% on every booking with membership',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          GestureDetector(
-                            onTap: () => onNavigateTab(2), // go to membership
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.full),
-                              ),
-                              child: const Text(
-                                'Explore Plans →',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                          Text('Popular Services', style: AppTextStyles.h3),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Real-time verified pricing in Haldia',
+                            style: AppTextStyles.bodySm.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.verified_user_rounded,
-                        size: 36,
-                        color: Colors.white,
+                    GestureDetector(
+                      onTap: () => widget.onNavigateTab(1), // go to services
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'View All',
+                              style: AppTextStyles.labelMd.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: AppSpacing.md),
 
-            // ── Service Categories ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text('Our Services', style: AppTextStyles.h3),
-                  ),
-                  GestureDetector(
-                    onTap: () => onNavigateTab(1), // go to services
-                    child: Text(
-                      'View All',
-                      style: AppTextStyles.labelMd.copyWith(
-                        color: AppColors.primary,
+              if (_isLoadingServices)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Column(
+                    children: List.generate(
+                      3,
+                      (index) => Container(
+                        height: 84,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.bgPrimary,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
+                )
+              else
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Column(
+                    children: _services
+                        .map(
+                          (service) => _ServiceListCard(
+                            service: service,
+                            onBook: () => widget.onNavigateTab(1),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: AppSpacing.md,
-                crossAxisSpacing: AppSpacing.md,
-                childAspectRatio: 0.95,
-                children: [
-                  _CategoryItem(
-                    icon: Icons.ac_unit_rounded,
-                    title: 'AC Service',
-                    color: const Color(0xFF0284C7),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                  _CategoryItem(
-                    icon: Icons.bolt_rounded,
-                    title: 'Electrician',
-                    color: const Color(0xFFEAB308),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                  _CategoryItem(
-                    icon: Icons.water_drop_rounded,
-                    title: 'Plumber',
-                    color: const Color(0xFF2563EB),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                  _CategoryItem(
-                    icon: Icons.home_repair_service_rounded,
-                    title: 'Appliances',
-                    color: const Color(0xFFE87722),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                  _CategoryItem(
-                    icon: Icons.cleaning_services_rounded,
-                    title: 'Cleaning',
-                    color: const Color(0xFF0D9488),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                  _CategoryItem(
-                    icon: Icons.format_paint_rounded,
-                    title: 'Painting',
-                    color: const Color(0xFF8B5CF6),
-                    onTap: () => onNavigateTab(1),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.sm),
 
-            // ── Popular Services ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text('Popular Bookings', style: AppTextStyles.h3),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            SizedBox(
-              height: 210,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+              // View All Services Full-Width CTA
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                children: [
-                  _PopularCard(
-                    title: 'AC Deep Clean & Jet Service',
-                    rating: '4.8 (1.2k)',
-                    price: '₹599',
-                    originalPrice: '₹799',
-                    tag: 'Most Popular',
-                    onBook: () => onNavigateTab(3),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    onPressed: () => widget.onNavigateTab(1),
+                    icon: const Icon(
+                      Icons.grid_view_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    label: const Text(
+                      'View All Services Catalog →',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  _PopularCard(
-                    title: 'Complete Bathroom Plumbing Check',
-                    rating: '4.9 (850)',
-                    price: '₹349',
-                    originalPrice: '₹499',
-                    tag: 'Recommended',
-                    onBook: () => onNavigateTab(3),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  _PopularCard(
-                    title: 'Switchboard & Wiring Audit',
-                    rating: '4.7 (620)',
-                    price: '₹299',
-                    originalPrice: '₹450',
-                    tag: 'Fast Booking',
-                    onBook: () => onNavigateTab(3),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xxl),
-          ],
+
+              const SizedBox(height: AppSpacing.xxl),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Horizontal Promotional Image Carousel Slider
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HomeImageSlider extends StatefulWidget {
+  const _HomeImageSlider({
+    required this.onNavigateTab,
+    this.autoPlay = true,
+  });
+
+  final ValueChanged<int> onNavigateTab;
+  final bool autoPlay;
+
+  @override
+  State<_HomeImageSlider> createState() => _HomeImageSliderState();
+}
+
+class _HomeImageSliderState extends State<_HomeImageSlider> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+  Timer? _timer;
+
+  late final List<_SliderSlideData> _slides = [
+    _SliderSlideData(
+      badge: 'SUMMER SPECIAL • 20% OFF',
+      title: 'AC Deep Jet Wash & Gas Check',
+      subtitle: 'Doorstep technician within 2 hours • 30-Day Warranty',
+      ctaText: 'Book AC Service',
+      gradient: const LinearGradient(
+        colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      assetImage: 'assets/images/ac.png',
+      fallbackIcon: Icons.ac_unit_rounded,
+      onTap: () => widget.onNavigateTab(1),
+    ),
+    _SliderSlideData(
+      badge: 'CERTIFIED EXPERTS',
+      title: 'Home Wiring & Electrical Audit',
+      subtitle: 'Switchboard, MCB & earthing fixes by verified pros',
+      ctaText: 'Book Electrician',
+      gradient: const LinearGradient(
+        colors: [Color(0xFF4F46E5), Color(0xFF3730A3)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      assetImage: 'assets/images/electrician.png',
+      fallbackIcon: Icons.bolt_rounded,
+      onTap: () => widget.onNavigateTab(1),
+    ),
+    _SliderSlideData(
+      badge: 'HEALTH & PURITY',
+      title: 'Pure & Safe Drinking Water',
+      subtitle: 'Free digital TDS check with RO filter & membrane care',
+      ctaText: 'Book RO Care',
+      gradient: const LinearGradient(
+        colors: [Color(0xFF0D9488), Color(0xFF115E59)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      assetImage: 'assets/images/ro.png',
+      fallbackIcon: Icons.water_drop_rounded,
+      onTap: () => widget.onNavigateTab(1),
+    ),
+    _SliderSlideData(
+      badge: 'CARE CLUB MEMBERSHIP',
+      title: 'Save Up To 25% On All Bookings',
+      subtitle: '11 BHK tailored plans starting at ₹299/mo with priority visits',
+      ctaText: 'Explore Plans →',
+      gradient: const LinearGradient(
+        colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      assetImage: 'assets/images/technician_avatar.jpg',
+      fallbackIcon: Icons.workspace_premium_rounded,
+      onTap: () => widget.onNavigateTab(2),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.92);
+
+    final bool isTesting =
+        !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (widget.autoPlay && !isTesting) {
+      _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+        if (!mounted || !_pageController.hasClients) return;
+        final next = (_currentPage + 1) % _slides.length;
+        _pageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutCubic,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 172,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _slides.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, index) {
+              final slide = _slides[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: GestureDetector(
+                  onTap: slide.onTap,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: slide.gradient,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Subtle background glow circle
+                        Positioned(
+                          right: -20,
+                          top: -20,
+                          child: Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                        ),
+
+                        // Content Row
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Row(
+                            children: [
+                              // Left text column
+                              Expanded(
+                                flex: 6,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.22),
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.full),
+                                      ),
+                                      child: Text(
+                                        slide.badge,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          slide.title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            height: 1.25,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          slide.subtitle,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.88),
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.full),
+                                      ),
+                                      child: Text(
+                                        slide.ctaText,
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(width: AppSpacing.sm),
+
+                              // Right image thumbnail
+                              Expanded(
+                                flex: 4,
+                                child: Center(
+                                  child: Container(
+                                    width: 86,
+                                    height: 86,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.16),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.md),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.md),
+                                      child: Image.asset(
+                                        slide.assetImage,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Icon(
+                                          slide.fallbackIcon,
+                                          color: Colors.white,
+                                          size: 40,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Indicator dots
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _slides.length,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 5,
+              width: _currentPage == i ? 20 : 6,
+              decoration: BoxDecoration(
+                color: _currentPage == i
+                    ? AppColors.primary
+                    : AppColors.border,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SliderSlideData {
+  final String badge;
+  final String title;
+  final String subtitle;
+  final String ctaText;
+  final LinearGradient gradient;
+  final String assetImage;
+  final IconData fallbackIcon;
+  final VoidCallback onTap;
+
+  const _SliderSlideData({
+    required this.badge,
+    required this.title,
+    required this.subtitle,
+    required this.ctaText,
+    required this.gradient,
+    required this.assetImage,
+    required this.fallbackIcon,
+    required this.onTap,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamic Service List Card (matches explore_service.jsx item structure)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ServiceListCard extends StatelessWidget {
+  const _ServiceListCard({
+    required this.service,
+    required this.onBook,
+  });
+
+  final ServiceItem service;
+  final VoidCallback onBook;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.bgPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Service Image / Thumbnail
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: AppColors.bgSecondary,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: _buildServiceImage(service.imageUrl, service.category),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+
+              // Content info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            service.category,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.1),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Text(
+                              service.tag,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      service.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.labelMd.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          service.rating,
+                          style: AppTextStyles.bodySm.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '• ${service.frequency}',
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: 8),
+
+          // Bottom Bar: Price & Book button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        service.price,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.h3.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    if (service.originalPrice != null) ...[
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          service.originalPrice!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySm.copyWith(
+                            decoration: TextDecoration.lineThrough,
+                            color: AppColors.textMuted,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  minimumSize: const Size(54, 28),
+                  elevation: 0,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+                onPressed: onBook,
+                child: const Text(
+                  'Book',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceImage(String url, String category) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _fallbackIcon(category),
+      );
+    }
+    if (url.isNotEmpty && url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => _fallbackIcon(category),
+      );
+    }
+    return _fallbackIcon(category);
+  }
+
+  Widget _fallbackIcon(String category) {
+    final cat = category.toLowerCase();
+    IconData icon = Icons.home_repair_service_rounded;
+    Color color = AppColors.primary;
+
+    if (cat.contains('ac')) {
+      icon = Icons.ac_unit_rounded;
+      color = const Color(0xFF0284C7);
+    } else if (cat.contains('electr')) {
+      icon = Icons.bolt_rounded;
+      color = const Color(0xFFEAB308);
+    } else if (cat.contains('plumb')) {
+      icon = Icons.water_drop_rounded;
+      color = const Color(0xFF2563EB);
+    } else if (cat.contains('ro')) {
+      icon = Icons.water_rounded;
+      color = const Color(0xFF0D9488);
+    }
+
+    return Center(
+      child: Icon(icon, color: color, size: 28),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service Category Item
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryItem extends StatelessWidget {
   const _CategoryItem({
@@ -395,138 +1116,6 @@ class _CategoryItem extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PopularCard extends StatelessWidget {
-  const _PopularCard({
-    required this.title,
-    required this.rating,
-    required this.price,
-    required this.originalPrice,
-    required this.tag,
-    required this.onBook,
-  });
-
-  final String title;
-  final String rating;
-  final String price;
-  final String originalPrice;
-  final String tag;
-  final VoidCallback onBook;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Text(
-                  tag,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.labelMd.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.star_rounded,
-                      size: 16, color: Color(0xFFF59E0B)),
-                  const SizedBox(width: 4),
-                  Text(
-                    rating,
-                    style: AppTextStyles.bodySm.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: price,
-                        style: AppTextStyles.h3.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const WidgetSpan(child: SizedBox(width: 4)),
-                      TextSpan(
-                        text: originalPrice,
-                        style: AppTextStyles.bodySm.copyWith(
-                          decoration: TextDecoration.lineThrough,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 6),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  minimumSize: const Size(52, 32),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-                onPressed: onBook,
-                child: const Text('Book', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
