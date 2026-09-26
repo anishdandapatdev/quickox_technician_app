@@ -74,5 +74,29 @@ void main() {
         expect(s.price.isNotEmpty, isTrue);
       }
     });
+
+    test('defaultVerticals has 8 Super App verticals matching multiServiceData.js', () {
+      expect(FirebaseServicesService.defaultVerticals.length, 8);
+      final ids = FirebaseServicesService.defaultVerticals.map((v) => v.id).toList();
+      expect(ids, containsAll([
+        'home_care',
+        'food_delivery',
+        'bike_cab',
+        'event_booking',
+        'ambulance',
+        'medicine_delivery',
+        'room_booking',
+        'electra_scooty',
+      ]));
+    });
+
+    test('fetchVerticals returns 8 verticals with fallback and Firestore enhancement', () async {
+      final service = FirebaseServicesService();
+      final verticals = await service.fetchVerticals();
+      expect(verticals.length, 8);
+      expect(verticals.any((v) => v.id == 'home_care'), isTrue);
+      expect(verticals.any((v) => v.id == 'medicine_delivery'), isTrue);
+      expect(verticals.any((v) => v.id == 'food_delivery'), isTrue);
+    });
   });
 }
