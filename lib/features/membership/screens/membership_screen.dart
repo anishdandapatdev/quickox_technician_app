@@ -109,18 +109,18 @@ class _MembershipScreenState extends State<MembershipScreen> {
   // Dynamic live data from Firebase with fallback
   List<MembershipPlanItem> _plans = FirebaseMembershipService.defaultPlans;
   List<MembershipCoupon> _availableCoupons = FirebaseMembershipService.defaultCoupons;
-  bool _isLoadingFirebase = false;
-  bool _isLiveSynced = false;
-
   @override
   void initState() {
     super.initState();
-    _loadFirebaseData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadFirebaseData();
+      }
+    });
   }
 
   /// Realtime fetch from Firestore `membership_config/prices` & `coupons`
   Future<void> _loadFirebaseData() async {
-    setState(() => _isLoadingFirebase = true);
     try {
       final remotePlans = await _firebaseService.fetchPlans();
       final remoteCoupons = await _firebaseService.fetchCoupons();
@@ -128,14 +128,10 @@ class _MembershipScreenState extends State<MembershipScreen> {
         setState(() {
           _plans = remotePlans;
           _availableCoupons = remoteCoupons;
-          _isLiveSynced = true;
-          _isLoadingFirebase = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingFirebase = false);
-      }
+      debugPrint('[MembershipScreen] Sync error: $e');
     }
   }
 
@@ -683,7 +679,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         title: const Text(
-          'Quickox Care Club',
+          'Membership Plans',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -692,23 +688,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: _isLoadingFirebase
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
-                    ),
-                  )
-                : const Icon(
-                    Icons.refresh_rounded,
-                    color: AppColors.primary,
-                  ),
-            tooltip: 'Sync with Firebase',
-            onPressed: _isLoadingFirebase ? null : _loadFirebaseData,
-          ),
           IconButton(
             icon: const Icon(
               Icons.local_offer_outlined,
@@ -719,55 +698,20 @@ class _MembershipScreenState extends State<MembershipScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Firebase Live Sync Status Badge ──────────────────────────────
-            Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: _isLiveSynced ? const Color(0xFFF0FDF4) : const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(AppRadius.full),
-                border: Border.all(
-                  color: _isLiveSynced ? const Color(0xFFBBF7D0) : const Color(0xFFBFDBFE),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: _isLiveSynced ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      _isLiveSynced
-                          ? 'Firebase Live Synced (home-service-haldia)'
-                          : (_isLoadingFirebase
-                              ? 'Connecting to Firebase...'
-                              : 'Quickox Care Club (Offline Ready)'),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _isLiveSynced ? const Color(0xFF15803D) : const Color(0xFF1E40AF),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: RefreshIndicator(
+        onRefresh: _loadFirebaseData,
+        color: AppColors.primary,
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
 
             // ── Active Subscription Status Card (Hero Banner) ─────────────────
             if (_hasActiveSubscription) ...[
@@ -827,7 +771,8 @@ class _MembershipScreenState extends State<MembershipScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   // ── Hero Banner: Active Membership Status ─────────────────────────────────
