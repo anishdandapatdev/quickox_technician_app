@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/common_widgets.dart';
 import '../../navigation/main_navigation_screen.dart';
+import '../widgets/rounded_text_input.dart';
 
 /// User Profile Setup Screen after OTP verification
 class ProfileSetupScreen extends StatefulWidget {
@@ -70,18 +71,30 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+            color: AppColors.textPrimary,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xl,
+            vertical: AppSpacing.sm,
           ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
 
                 // ── Avatar with Camera badge ─────────────────────────────────
                 Stack(
@@ -123,16 +136,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 const SizedBox(height: AppSpacing.xxl),
 
                 // ── Name Field ───────────────────────────────────────────────
-                _InputLabel(label: AppStrings.fullName),
-                const SizedBox(height: AppSpacing.xs),
-                TextFormField(
+                RoundedTextInput(
                   controller: _nameController,
+                  labelText: AppStrings.fullName,
+                  hintText: AppStrings.fullNameHint,
+                  prefixIcon: Icons.person_outline_rounded,
                   textCapitalization: TextCapitalization.words,
-                  style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(
-                    hintText: AppStrings.fullNameHint,
-                    prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.textMuted),
-                  ),
                   validator: (val) {
                     if (val == null || val.trim().length < 2) {
                       return 'Please enter your full name';
@@ -140,19 +149,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
 
                 // ── Email / Gmail Field ──────────────────────────────────────
-                _InputLabel(label: AppStrings.email),
-                const SizedBox(height: AppSpacing.xs),
-                TextFormField(
+                RoundedTextInput(
                   controller: _emailController,
+                  labelText: AppStrings.email,
+                  hintText: AppStrings.emailHint,
+                  prefixIcon: Icons.mail_outline_rounded,
                   keyboardType: TextInputType.emailAddress,
-                  style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(
-                    hintText: AppStrings.emailHint,
-                    prefixIcon: Icon(Icons.mail_outline_rounded, color: AppColors.textMuted),
-                  ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Please enter your email or Gmail address';
@@ -163,42 +168,45 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
 
                 // ── Location / Address Field ─────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const _InputLabel(label: AppStrings.location),
-                    GestureDetector(
-                      onTap: _useCurrentLocation,
-                      child: Row(
+                RoundedTextInput(
+                  controller: _locationController,
+                  labelText: AppStrings.location,
+                  hintText: AppStrings.locationHint,
+                  prefixIcon: Icons.location_on_outlined,
+                  suffixWidget: GestureDetector(
+                    onTap: _useCurrentLocation,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.my_location_rounded,
                             size: 14,
                             color: AppColors.primary,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
-                            'Use Current',
-                            style: AppTextStyles.bodySm.copyWith(
-                              color: AppColors.primary,
+                            'Current',
+                            style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                TextFormField(
-                  controller: _locationController,
-                  style: AppTextStyles.bodyLg.copyWith(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(
-                    hintText: AppStrings.locationHint,
-                    prefixIcon: Icon(Icons.location_on_outlined, color: AppColors.textMuted),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -215,28 +223,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   isLoading: _isLoading,
                   onPressed: _handleCompleteSetup,
                 ),
+                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InputLabel extends StatelessWidget {
-  const _InputLabel({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: AppTextStyles.labelMd.copyWith(
-          color: AppColors.textSecondary,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
