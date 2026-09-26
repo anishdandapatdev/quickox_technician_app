@@ -394,7 +394,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Title & Active Member Banner
-    expect(find.text('Quickox Care Club'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Membership Plans'), findsOneWidget);
     expect(find.text('ACTIVE SUBSCRIBER'), findsOneWidget);
     expect(find.text('₹899 Plan — 2 BHK Premium Protection'), findsOneWidget);
 
@@ -477,7 +477,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Quickox Care Club'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Membership Plans'), findsOneWidget);
     expect(find.text('Membership Plans (11)'), findsOneWidget);
   });
 }
