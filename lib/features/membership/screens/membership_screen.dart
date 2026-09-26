@@ -915,6 +915,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
+                    minimumSize: const Size(0, 44),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -942,6 +943,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Color(0xFF475569)),
+                  minimumSize: const Size(0, 44),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1105,6 +1107,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
               selectedColor: AppColors.primary,
               backgroundColor: Colors.white,
               showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 side: BorderSide(

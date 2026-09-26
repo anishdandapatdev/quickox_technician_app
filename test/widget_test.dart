@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quickox_technician_app/core/theme/app_theme.dart';
 import 'package:quickox_technician_app/features/auth/screens/login_screen.dart';
 import 'package:quickox_technician_app/features/auth/screens/otp_verification_screen.dart';
 import 'package:quickox_technician_app/features/auth/screens/profile_setup_screen.dart';
@@ -387,8 +388,9 @@ void main() {
     });
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: MembershipScreen(),
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const MembershipScreen(),
       ),
     );
     await tester.pumpAndSettle();
@@ -425,8 +427,9 @@ void main() {
     });
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: MembershipScreen(),
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const MembershipScreen(),
       ),
     );
     await tester.pumpAndSettle();
@@ -471,8 +474,9 @@ void main() {
     });
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: MembershipScreen(),
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const MembershipScreen(),
       ),
     );
     await tester.pumpAndSettle();

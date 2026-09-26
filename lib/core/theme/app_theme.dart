@@ -47,7 +47,7 @@ final class AppTheme {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             textStyle: AppTextStyles.labelLg,
-            minimumSize: const Size(double.infinity, 52),
+            minimumSize: const Size(64, 48),
           ),
         ),
 
@@ -64,7 +64,7 @@ final class AppTheme {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             textStyle: AppTextStyles.labelMd,
-            minimumSize: const Size(double.infinity, 52),
+            minimumSize: const Size(64, 48),
           ),
         ),
 
